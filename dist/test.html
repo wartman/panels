@@ -1,0 +1,75 @@
+<!doctype HTML>
+<html>
+  <head>
+    <title>Example Comic Script</title>
+  </head>
+
+  <body>
+    <style>
+      body {
+        font-family: sans-serif, "Helvetica Neue", arial;
+        font-size: 15px;
+      }
+
+      .document {
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .page {
+        margin: 0 0 20px 0;
+        padding: 0 0 20px 0;
+        border-bottom: 1px solid #cccccc;
+      }
+
+      .page:last-child {
+        border-bottom: none;
+      }
+
+      .page-header {
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        font-weight: bold;
+        text-decoration: underline;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        margin: 0 0 20px 0;
+        padding: 0 0 20px 0;
+      }
+
+      .panel-header {
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .dialog {
+        width: 400px;
+        text-align: center; 
+        margin: 0 auto 20px;
+      }
+
+      .dialog-sfx {
+        font-style: italic;
+      }
+
+      .dialog-header-modifiers {
+        margin-left: 10px;
+      }
+
+      .dialog-header-modifiers:before {
+        content: "("
+      }
+
+      .dialog-header-modifiers:after {
+        content: ")"
+      }
+    </style>
+    <header class="comic-header page">
+      <h1>Example Comic Script</h1>
+      <h2>By Peter Wartman</h2>
+    </header>
+    <main class="document"><section class="page"><header class="page-header">Page 1</header><div class="panel"><header class="panel-header" id="panel-1">Panel 1</header><p>We open on a dark and stormy night. This first panel here should be big -- really get that stormy atmosphere.</p><p>Maybe like (this)[some/url.png] or something?</p><div class="dialog dialog-caption"><header class="dialog-header"><span class="dialog-header-speaker">CAPTION</span><span class="dialog-header-modifiers">Night</span></header><div class="dialog-content"><p>A dark and stormy night...</p></div></div></div><div class="panel"><header class="panel-header" id="panel-2">Panel 2</header><p>Fred turns to his friend. He looks around nervously.</p><div class="dialog"><header class="dialog-header"><span class="dialog-header-speaker">FRED FREDSON</span><span class="dialog-header-modifiers">OFF</span></header><div class="dialog-content"><p>Hey Bob, it sure is _stormy_ out here. (cont.) Kind of *scary* </p></div></div><div class="dialog"><header class="dialog-header"><span class="dialog-header-speaker">BOB BOBSMAN</span></header><div class="dialog-content"><p>You got that right, friend.</p></div></div></div><div class="panel"><header class="panel-header" id="panel-3">Panel 3</header><p>There is a long and awkward silence.</p></div></section><section class="page"><header class="page-header">Page 2</header><div class="panel"><header class="panel-header" id="panel-1">Panel 1</header><p>A lightning bolt comes out of nowhere and incinerates both characters. It is grisly and a bit horrifying.</p><p>But also funny.</p><div class="dialog dialog-sfx"><header class="dialog-header"><span class="dialog-header-speaker">SFX</span><span class="dialog-header-modifiers">Lightning</span></header><div class="dialog-content"><p>KRRKOOM</p></div></div></div><div class="panel"><header class="panel-header" id="panel-2">Panel 2</header><p>Fade to black.</p><p>In a comic.</p><p>You can figure it out.</p></div></section></main>
+  </body>
+</html>
