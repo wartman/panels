@@ -20,7 +20,7 @@ We open on a dark and stormy night. This first panel here should be big -- reall
 
 /* Note the link here -- use this if you need to include references for your artist */
 
-Maybe like (this)[some/url.png] or something?
+Maybe like [this](some/url.png) or something?
 
     /* The following is a caption, which is simply marked by typing CAPTION in all caps. You can optionally add a location/time after it in parens. */
 

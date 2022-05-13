@@ -1,7 +1,7 @@
 package panels;
 
 class VisualReporter implements Reporter {
-  final print:(str:String) -> Void;
+  final print:(str:String)->Void;
 
   public function new(?print) {
     #if (sys || hxnodejs)
@@ -49,6 +49,10 @@ class VisualReporter implements Reporter {
       start = t.length;
     }
     print(formatSpacer() + repeat(arrows.substr(0, start).length - 1) + e.message);
+    if (e.detailedMessage != null) {
+      print('');
+      print(e.detailedMessage);
+    }
     print('');
   }
 
@@ -63,8 +67,7 @@ class VisualReporter implements Reporter {
   }
 
   function repeat(len:Int, value:String = ' ') {
-    if (len <= 0)
-      return '';
+    if (len <= 0) return '';
     return [for (_ in 0...len) value].join('');
   }
 }

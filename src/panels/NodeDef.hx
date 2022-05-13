@@ -8,6 +8,13 @@ enum PanelType {
   UserDefined(number:Int);
 }
 
+enum TextType {
+  Normal(value:String);
+  Bold(value:String);
+  Italic(value:String);
+  Link(label:Node, url:String);
+}
+
 typedef FrontmatterProperty = {
   public final key:String;
   public final value:String;
@@ -30,7 +37,7 @@ abstract Frontmatter(Array<FrontmatterProperty>) from Array<FrontmatterProperty>
 
 enum NodeDef {
   Document(frontmatter:Frontmatter, nodes:Array<Node>);
-  Text(content:String);
+  Text(content:TextType);
   Paragraph(nodes:Array<Node>);
   Page(nodes:Array<Node>);
   Panel(type:PanelType, nodes:Array<Node>);

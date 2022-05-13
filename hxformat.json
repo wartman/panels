@@ -1,5 +1,23 @@
 {
   "indentation": {
     "character": "  "
+  },
+  "sameLine": {
+    "anonFunctionBody": "same",
+    "functionBody": "same",
+    "ifBody": "same",
+    "forBody": "same",
+    "whileBody": "same",
+    "caseBody": "keep",
+    "expressionIf": "keep"
+  },
+  "whitespace": {
+    "functionTypeHaxe4Policy": "none"
+  },
+  "wrapping": {
+    "opAddSubChain": {
+      "defaultWrap": "keep",
+      "defaultLocation": "beforeLast"
+    }
   }
 }

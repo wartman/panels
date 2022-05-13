@@ -5,9 +5,12 @@ Version: 1
 ---
 []
 
-We open on a dark and stormy night. This first panel here should be big -- really get that stormy atmosphere.
+        /* This should be ignored /*and should be nested!*/ */
 
-Maybe like (this)[some/url.png] or something?
+We open on a dark and stormy night. This first panel here should
+be big -- really get that stormy atmosphere.
+
+Maybe like [this] (some/url.png) or something?
 
     CAPTION (Night)
     A dark and stormy night...
@@ -16,10 +19,10 @@ Maybe like (this)[some/url.png] or something?
 
 Fred turns to his friend. He looks around nervously.
 
-FRED FREDSON (OFF)
-Hey Bob, it sure is _stormy_ out here.
-(cont.)
-Kind of *scary* 
+    FRED FREDSON (OFF)
+    Hey Bob, it sure is _stormy_ out here.
+    (cont.)
+    Kind of **scary** 
 
 BOB BOBSMAN
 You got that right, friend.
@@ -39,7 +42,7 @@ But also funny.
     SFX (Lightning)
     KRRKOOM
 
-[2] 
+[2]
 
 Fade to black.
 

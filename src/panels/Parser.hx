@@ -1,11 +1,7 @@
 package panels;
 
-// import haxe.ds.Option;
 import panels.NodeDef;
 
-// @todo: Comments
-// @todo: Sub-paragraph stuff like links and text decoration.
-// @todo: Escape sequences with the backslash (\)
 class Parser {
   final source:Source;
   var position = 0;
@@ -28,11 +24,15 @@ class Parser {
   function parseFrontmatter():Array<FrontmatterProperty> {
     var props:Array<FrontmatterProperty> = [];
 
+    ignoreComments();
+
     if (!checkProperty()) {
       return props;
     }
 
     while (!isAtEnd() && !checkPageBreak()) {
+      spacesOrTabs();
+      ignoreComments();
       var start = position;
       var key = property();
       spacesOrTabs();
@@ -93,7 +93,12 @@ class Parser {
     var type:PanelType = Auto;
     var nodes:Array<Node> = [];
 
-    consume('[');
+    ignoreComments();
+
+    consume('[',
+      'Expected a panel-number declaration (either empty brackets `[]` or '
+      + 'with a manually entered number (like `[1]`)). Note that every page '
+      + 'requires at least one panel.');
     whitespace();
     if (isDigit(peek())) {
       type = UserDefined(number());
@@ -106,7 +111,10 @@ class Parser {
     while (!isAtEnd() && !checkPanelStart() && !checkPageBreak()) {
       spacesOrTabs();
 
-      if (caption()) {
+      if (match('/*')) {
+        comment();
+        whitespace();
+      } else if (caption()) {
         nodes.push(parseCaption());
       } else if (sfx()) {
         nodes.push(parseSfx());
@@ -144,9 +152,7 @@ class Parser {
     spacesOrTabs();
     var modifiers = modifierList();
     spacesOrTabs();
-
     requireNewline();
-    spacesOrTabs();
 
     var nodes = dialogBody();
 
@@ -181,17 +187,36 @@ class Parser {
     var start = position;
     var nodes:Array<Node> = [];
 
+    spacesOrTabs();
+    if (matchCont()) requireNewline();
+
     function process() {
       while (!isAtEnd() && !checkNewline()) {
-        nodes.push(parseText());
+        if (check('\\')) {
+          parseText();
+        } else if (match('[')) {
+          nodes.push(parseLink());
+        } else if (match('**')) {
+          nodes.push(parseBold('**'));
+        } else if (match('__')) {
+          nodes.push(parseBold('__'));
+        } else if (match('*')) {
+          nodes.push(parseItalic('*'));
+        } else if (match('_')) {
+          nodes.push(parseItalic('_'));
+        } else {
+          nodes.push(parseText());
+        }
       }
       var prev = position;
       if (newline()) {
         // Note: `whitespace()` will get newlines too, which we don't want
         spacesOrTabs();
-        if (!newline() && !checkPageBreak()) {
+        if (!checkNewline() && !checkPageBreak() && !checkCont()) {
+          // Join text nodes with a space.
+          nodes.push(new Node(Text(Normal(' ')), createPos(position)));
           process();
-        } else {
+        } else if (!checkCont()) {
           position = prev;
         }
       }
@@ -202,16 +227,75 @@ class Parser {
     return new Node(Paragraph(nodes), createPos(start));
   }
 
+  function parseLink() {
+    var start = position - 1;
+    var label = parseText(']');
+    if (!check('](')) {
+      position = start + 1;
+      return new Node(Text(Normal('[')), createPos(start));
+    }
+    consume(']');
+    consume('(');
+    var url = readText(() -> check(')'));
+    consume(')');
+    return new Node(Text(Link(label, url)), createPos(start));
+  }
+
+  function parseBold(delimiter:String) {
+    var start = position;
+    var content = readText(()->check(delimiter));
+    consume(delimiter);
+    return new Node(Text(Bold(content)), createPos(start));
+  }
+
+  function parseItalic(delimiter:String) {
+    var start = position;
+    var content = readText(()->check(delimiter));
+    consume(delimiter);
+    return new Node(Text(Italic(content)), createPos(start));
+  }
+
   function parseText(?delimiter:String) {
     var start = position;
-    // @todo: We'll need to handle stuff like links and bold/italic soon.
-    // Go look inside what we did for Boxup maybe?
-    var content = readWhile(() -> {
-      if (delimiter != null && peek() == delimiter)
-        return false;
-      return peek() != '\n' && peek(2) != '\r\n';
-    });
-    return new Node(Text(content), createPos(start));
+    var delimiters = ['*', '_', '['];
+
+    if (delimiter != null) {
+      delimiters.push(delimiter);
+    }
+
+    var content = readText(() -> checkAny(...delimiters));
+
+    // function process() {
+    //   if (match('\\')) {
+    //     content += advance();
+    //   }
+    //   content += readWhile(() -> !checkAny(...delimiters) && !checkNewline());
+    //   if (match('\\')) {
+    //     content += advance();
+    //     if (!checkNewline()) process();
+    //   }
+    // }
+
+    // process();
+
+    return new Node(Text(Normal(content)), createPos(start));
+  }
+
+  function readText(?until:()->Bool) {
+    var stop = if (until == null)
+      () -> isAtEnd() || checkNewline()
+    else
+      () -> until() || checkNewline() || isAtEnd();
+    var content = '';
+    while (!stop()) {
+      if (check('\\')) {
+        advance();
+        content += advance();
+      } else {
+        content += advance();
+      }
+    }
+    return content;
   }
 
   function checkPanelStart() {
@@ -222,6 +306,14 @@ class Parser {
     return check('---');
   }
 
+  function checkCont() {
+    return check('(cont.)');
+  }
+
+  function matchCont() {
+    return match('(cont.)');
+  }
+
   function pageBreak() {
     return match('---');
   }
@@ -229,7 +321,7 @@ class Parser {
   function requirePageBreakOrEndOfFile() {
     whitespace();
     if (!match('---') && !isAtEnd()) {
-      throw error('Expected end of file', position, position);
+      throw new ParserException('Expected page break or end of file', null, createPos(position));
     }
   }
 
@@ -252,8 +344,7 @@ class Parser {
     var prev = position;
     var parts:Array<String> = [];
 
-    function part()
-      return readWhile(() -> isUcAlpha(peek()));
+    function part() return readWhile(() -> isUcAlpha(peek()));
 
     parts.push(part());
 
@@ -271,6 +362,29 @@ class Parser {
     }
 
     return parts.join(' ');
+  }
+
+  function comment(depth:Int = 0) {
+    var content = readWhile(() -> !check('*/') && !check('/*'));
+    if (match('/*')) {
+      return content
+        + comment(depth
+          + 1);
+    }
+    consume('*/');
+    if (depth > 0) {
+      return content
+        + comment(depth
+          - 1);
+    }
+    return content;
+  }
+
+  function ignoreComments() {
+    while (!isAtEnd() && match('/*')) {
+      comment();
+      whitespace();
+    }
   }
 
   function checkNewline() {
@@ -317,25 +431,15 @@ class Parser {
     return isAlpha(c) || isDigit(c);
   }
 
-  // function attempt<T>(cb:() -> Option<T>):Option<T> {
-  //   var start = position;
-  //   return switch cb() {
-  //     case Some(v):
-  //       Some(v);
-  //     case None:
-  //       position = start;
-  //       None;
-  //   }
-  // }
-
-  function readWhile(compare:() -> Bool):String {
+  function readWhile(compare:()->Bool):String {
     var out = [while (!isAtEnd() && compare()) advance()];
     return out.join('');
   }
 
   function match(value:String) {
     if (check(value)) {
-      position = position + value.length;
+      position = position
+        + value.length;
       return true;
     }
     return false;
@@ -343,8 +447,7 @@ class Parser {
 
   function matchAny(...values:String) {
     for (v in values.toArray()) {
-      if (match(v))
-        return true;
+      if (match(v)) return true;
     }
     return false;
   }
@@ -356,21 +459,20 @@ class Parser {
 
   function checkAny(...values:String) {
     for (v in values.toArray()) {
-      if (check(v))
-        return true;
+      if (check(v)) return true;
     }
     return false;
   }
 
-  function consume(value:String) {
+  function consume(value:String, ?reason:String) {
     if (!match(value)) {
-      throw expected(value);
+      throw new ParserException('Expected `${escapeForDisplay(value)}`', reason, createPos(position - value.length, position));
     }
   }
 
   function consumeAny(...values:String) {
     if (!matchAny(...values)) {
-      throw expected(values.toArray().map(escapeForDisplay).join(' or '));
+      throw new ParserException(values.toArray().map(escapeForDisplay).join(' or '), createPos(position - 1));
     }
   }
 
@@ -382,33 +484,17 @@ class Parser {
   }
 
   function advance() {
-    if (!isAtEnd())
-      position++;
+    if (!isAtEnd()) position++;
     return previous();
   }
 
   function previous() {
-    return source.content.charAt(position - 1);
+    return source.content.charAt(position
+      - 1);
   }
 
   function isAtEnd() {
     return position == source.content.length;
-  }
-
-  function error(msg:String, min:Int, max:Int) {
-    return new ParserException(msg, createPos(min, max));
-  }
-
-  function errorAt(msg:String, value:String) {
-    return error(msg, position - value.length, position);
-  }
-
-  function reject(s:String) {
-    return error('Unexpected `${escapeForDisplay(s)}`', position - s.length, position);
-  }
-
-  function expected(s:String) {
-    return error('Expected `${escapeForDisplay(s)}`', position, position + 1);
   }
 
   function escapeForDisplay(s:String) {

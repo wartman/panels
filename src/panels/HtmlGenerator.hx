@@ -105,11 +105,16 @@ class HtmlGenerator {
       case Document(_, nodes):
         '<main class="document">' + nodes.map(generateNode).join('') + '</main>';
       case Text(content):
-        content;
+        switch content {
+          case Normal(value): value;
+          case Bold(value): '<b>$value</b>';
+          case Italic(value): '<i>$value</i>';
+          case Link(label, url): '<a href="$url">${generateNode(label)}</a>';
+        }
       case Paragraph(nodes) if (nodes.length == 0):
         '';
       case Paragraph(nodes):
-        '<p>' + nodes.map(generateNode).join(' ') + '</p>';
+        '<p>' + nodes.map(generateNode).join('') + '</p>';
       case Page(nodes):
         panelNumber = 1;
         '<section class="page">'
