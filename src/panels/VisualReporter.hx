@@ -1,5 +1,7 @@
 package panels;
 
+import panels.Reporter;
+
 class VisualReporter implements Reporter {
   final print:(str:String)->Void;
 
@@ -11,44 +13,85 @@ class VisualReporter implements Reporter {
     #end
   }
 
-  public function report(e:ParserException, source:Source) {
+  public function report(e:ReporterMessage, source:Source) {
     var pos = e.pos;
     var min = pos.min;
+    var eMin = pos.min;
+    var textPos = min;
     var max = pos.max;
-    var text = source.content.substring(min, max);
-    var arrows = repeat(text.length, '^');
+    var padding = 0;
 
     while (min > 0) {
-      switch source.content.charAt(--min) {
+      switch source.content.charAt(min) {
         case '\n':
+          min++;
           break;
-        case t:
-          text = t + text;
-          arrows = ' ' + arrows;
+        default:
+          textPos--;
+          min--;
       }
     }
 
     while (max <= source.content.length) {
-      switch source.content.charAt(max++) {
+      switch source.content.charAt(max) {
         case '\n':
           break;
-        case t:
-          text += t;
+        default:
+          max++;
       }
     }
 
-    var line = source.content.substring(0, max).split('\n').length - 1; // why do we need to minus one?
+    var text = source.content.substring(min, max);
+    var line = source.content.substring(0, max).split('\n').length;
     var textLines = text.split('\n');
+    var totalLines = textLines.length;
+    var linesWritten = 0;
+    var placeholderWritten = false;
+    var firstLine = line - (textLines.length - 1);
     var start = 0;
+    var underline = switch e.type {
+      case Warning: '~';
+      case Error: '^';
+    }
 
-    print('');
-    print('ERROR: ${pos.file}:${line} [${pos.min} ${pos.max}]');
+    switch e.type {
+      case Error:
+        print('');
+        print('ERROR: ${pos.file}:${firstLine} [${pos.min} ${pos.max}]');
+      case Warning:
+        print('');
+        print('WARNING: ${pos.file}:${firstLine} [${pos.min} ${pos.max}]');
+    }
+
     for (t in textLines) {
-      print(formatNumber(line++) + t);
-      print(formatSpacer() + arrows.substr(start, t.length));
+      linesWritten++;
+
+      var currentLine = firstLine++;
+
+      if ((totalLines > 6 && (linesWritten <= 3 || (linesWritten >= totalLines - 3))) || totalLines < 6) {
+        print(formatNumber(currentLine) + t);
+        if (textPos < eMin) {
+          if (textPos + t.length > eMin) {
+            var space = eMin - textPos;
+            padding = space;
+            print(formatSpacer() + repeat(space) + repeat(t.length - space, underline));
+          }
+        } else {
+          print(formatSpacer() + repeat(t.length, underline));
+        }
+      } else if (!placeholderWritten) {
+        placeholderWritten = true;
+        print('');
+        print(formatBreakpoint());
+        print('');
+      }
+
+      textPos += t.length;
       start = t.length;
     }
-    print(formatSpacer() + repeat(arrows.substr(0, start).length - 1) + e.message);
+
+    print(formatSpacer() + repeat(padding) + e.message);
+
     if (e.detailedMessage != null) {
       print('');
       print(e.detailedMessage);
@@ -64,6 +107,10 @@ class VisualReporter implements Reporter {
 
   function formatSpacer() {
     return repeat(4) + '| ';
+  }
+
+  function formatBreakpoint() {
+    return repeat(4) + '...';
   }
 
   function repeat(len:Int, value:String = ' ') {

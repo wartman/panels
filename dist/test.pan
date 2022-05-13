@@ -5,14 +5,14 @@ Version: 1
 ---
 []
 
-        /* This should be ignored /*and should be nested!*/ */
+        /* This should be ignored /*and can be nested!*/ */
 
 We open on a dark and stormy night. This first panel here should
 be big -- really get that stormy atmosphere.
 
-Maybe like [this] (some/url.png) or something?
+Maybe like [this](some/url.png) or something?
 
-    CAPTION (Night)
+    CAPTION (Night) 
     A dark and stormy night...
 
 []
@@ -33,7 +33,7 @@ There is a long and awkward silence.
 
 ---
 
-[1]
+[]
 
 A lightning bolt comes out of nowhere and incinerates both characters. It is grisly and a bit horrifying.
 

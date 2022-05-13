@@ -1,3 +1,4 @@
+import panels.Validator;
 import panels.ParserException;
 import panels.VisualReporter;
 import panels.Source;
@@ -17,10 +18,13 @@ function main() {
   try {
     var parser = new Parser(source);
     var node = parser.parse();
+    var validator = new Validator(node, {maxPanelsPerPage: 2});
+    var warnings = validator.validate();
     var generator = new HtmlGenerator(node);
     var content = generator.generate();
+    for (warning in warnings) reporter.report(warning, source);
     Path.join([Sys.programPath().directory(), 'test.html']).saveContent(content);
   } catch (e:ParserException) {
-    reporter.report(e, source);
+    reporter.report(e.toReporterMessage(), source);
   }
 }

@@ -1,6 +1,7 @@
 package panels;
 
 import haxe.Exception;
+import panels.Reporter;
 
 class ParserException extends Exception {
   public final detailedMessage:Null<String>;
@@ -10,5 +11,14 @@ class ParserException extends Exception {
     super(message);
     this.detailedMessage = detailedMessage;
     this.pos = pos;
+  }
+
+  public function toReporterMessage():ReporterMessage {
+    return {
+      type: Error,
+      message: message,
+      detailedMessage: detailedMessage,
+      pos: pos
+    }
   }
 }

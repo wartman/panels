@@ -4,8 +4,10 @@ import panels.NodeDef;
 
 class HtmlGenerator {
   final node:Node;
+  var pageIsLeft:Bool = false;
   var pageNumber = 1;
   var panelNumber = 1;
+  var panelCount = 0;
 
   public function new(node) {
     this.node = node;
@@ -51,8 +53,6 @@ class HtmlGenerator {
 
       .page-header {
         margin: 0 0 20px 0;
-        font-size: 20px;
-        font-weight: bold;
         text-decoration: underline;
         text-transform: uppercase;
       }
@@ -117,15 +117,21 @@ class HtmlGenerator {
         '<p>' + nodes.map(generateNode).join('') + '</p>';
       case Page(nodes):
         panelNumber = 1;
+        panelCount = 0;
+        var body = nodes.map(generateNode).join('');
+
         '<section class="page">'
-        + '<header class="page-header">Page ${pageNumber++}</header>'
-        + nodes.map(generateNode).join('')
+        + '<header class="page-header">Page ${pageNumber++} - $panelCount Panels</header>'
+        + body
         + '</section>';
       case Panel(type, nodes):
+        panelCount++;
+
         var number = switch type {
           case Auto: panelNumber++;
           case UserDefined(number): number;
         }
+
         '<div class="panel">'
         + '<header class="panel-header" id="panel-$number">Panel $number</header>'
         + nodes.map(generateNode).join('')

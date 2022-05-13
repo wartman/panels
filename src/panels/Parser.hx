@@ -188,7 +188,10 @@ class Parser {
     var nodes:Array<Node> = [];
 
     spacesOrTabs();
-    if (matchCont()) requireNewline();
+    if (matchCont()) {
+      requireNewline();
+      spacesOrTabs();
+    }
 
     function process() {
       while (!isAtEnd() && !checkNewline()) {
