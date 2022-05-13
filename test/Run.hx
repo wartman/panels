@@ -18,7 +18,11 @@ function main() {
   try {
     var parser = new Parser(source);
     var node = parser.parse();
-    var validator = new Validator(node, {maxPanelsPerPage: 2});
+    var validator = new Validator(node, {
+      maxPanelsPerPage: 6,
+      requireTitle: true,
+      requireAuthor: true
+    });
     var warnings = validator.validate();
     var generator = new HtmlGenerator(node);
     var content = generator.generate();

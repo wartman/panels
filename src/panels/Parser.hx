@@ -165,11 +165,7 @@ class Parser {
   function modifierList() {
     var modifiers:Array<Node> = [];
     if (match('(')) {
-      whitespace();
-      while (!isAtEnd() && !check(')')) {
-        modifiers.push(parseText(')'));
-        whitespace();
-      }
+      modifiers.push(parseText(')'));
       consume(')');
     }
     return modifiers;
@@ -378,7 +374,7 @@ class Parser {
   }
 
   function requireNewline() {
-    return consumeAny('\r\n', '\n');
+    return consumeAny(['\r\n', '\n'], 'A newline (enter) is required here.');
   }
 
   function isWhitespace(c:String) {
@@ -452,9 +448,10 @@ class Parser {
     }
   }
 
-  function consumeAny(...values:String) {
+  function consumeAny(values:Array<String>, ?reason:String) {
     if (!matchAny(...values)) {
-      throw new ParserException(values.toArray().map(escapeForDisplay).join(' or '), createPos(position - 1));
+      throw new ParserException(
+        'Expected ' + values.map(escapeForDisplay).join(' or '), reason, createPos(position - 1));
     }
   }
 

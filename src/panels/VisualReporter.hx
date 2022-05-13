@@ -16,8 +16,6 @@ class VisualReporter implements Reporter {
   public function report(e:ReporterMessage, source:Source) {
     var pos = e.pos;
     var min = pos.min;
-    var eMin = pos.min;
-    var textPos = min;
     var max = pos.max;
     var padding = 0;
 
@@ -27,7 +25,6 @@ class VisualReporter implements Reporter {
           min++;
           break;
         default:
-          textPos--;
           min--;
       }
     }
@@ -70,14 +67,14 @@ class VisualReporter implements Reporter {
 
       if ((totalLines > 6 && (linesWritten <= 3 || (linesWritten >= totalLines - 3))) || totalLines < 6) {
         print(formatNumber(currentLine) + t);
-        if (textPos < eMin) {
-          if (textPos + t.length > eMin) {
-            var space = eMin - textPos;
+        if (min < pos.min) {
+          if (min + t.length > pos.min) {
+            var space = pos.min - min;
             padding = space;
-            print(formatSpacer() + repeat(space) + repeat(t.length - space, underline));
+            print(formatSpacer() + repeat(space) + repeatAtLeastOnce(t.length - space, underline));
           }
         } else {
-          print(formatSpacer() + repeat(t.length, underline));
+          print(formatSpacer() + repeatAtLeastOnce(t.length, underline));
         }
       } else if (!placeholderWritten) {
         placeholderWritten = true;
@@ -86,7 +83,7 @@ class VisualReporter implements Reporter {
         print('');
       }
 
-      textPos += t.length;
+      min += t.length;
       start = t.length;
     }
 
@@ -111,6 +108,11 @@ class VisualReporter implements Reporter {
 
   function formatBreakpoint() {
     return repeat(4) + '...';
+  }
+
+  function repeatAtLeastOnce(len:Int, value:String = ' ') {
+    if (len <= 0) return repeat(1, value);
+    return repeat(len, value);
   }
 
   function repeat(len:Int, value:String = ' ') {
