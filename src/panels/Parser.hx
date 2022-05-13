@@ -236,21 +236,21 @@ class Parser {
     }
     consume(']');
     consume('(');
-    var url = readText(() -> check(')'));
+    var url = readText(() -> !check(')'));
     consume(')');
     return new Node(Text(Link(label, url)), createPos(start));
   }
 
   function parseBold(delimiter:String) {
     var start = position;
-    var content = readText(()->check(delimiter));
+    var content = readText(() -> !check(delimiter));
     consume(delimiter);
     return new Node(Text(Bold(content)), createPos(start));
   }
 
   function parseItalic(delimiter:String) {
     var start = position;
-    var content = readText(()->check(delimiter));
+    var content = readText(() -> !check(delimiter));
     consume(delimiter);
     return new Node(Text(Italic(content)), createPos(start));
   }
@@ -263,31 +263,18 @@ class Parser {
       delimiters.push(delimiter);
     }
 
-    var content = readText(() -> checkAny(...delimiters));
-
-    // function process() {
-    //   if (match('\\')) {
-    //     content += advance();
-    //   }
-    //   content += readWhile(() -> !checkAny(...delimiters) && !checkNewline());
-    //   if (match('\\')) {
-    //     content += advance();
-    //     if (!checkNewline()) process();
-    //   }
-    // }
-
-    // process();
+    var content = readText(() -> !checkAny(...delimiters));
 
     return new Node(Text(Normal(content)), createPos(start));
   }
 
-  function readText(?until:()->Bool) {
-    var stop = if (until == null)
-      () -> isAtEnd() || checkNewline()
+  function readText(?doCheck:()->Bool) {
+    var shouldLoop = if (doCheck == null)
+      () -> !isAtEnd() && !checkNewline()
     else
-      () -> until() || checkNewline() || isAtEnd();
+      () -> !isAtEnd() && !checkNewline() && doCheck();
     var content = '';
-    while (!stop()) {
+    while (shouldLoop()) {
       if (check('\\')) {
         advance();
         content += advance();
@@ -366,17 +353,9 @@ class Parser {
 
   function comment(depth:Int = 0) {
     var content = readWhile(() -> !check('*/') && !check('/*'));
-    if (match('/*')) {
-      return content
-        + comment(depth
-          + 1);
-    }
+    if (match('/*')) return content + comment(depth + 1);
     consume('*/');
-    if (depth > 0) {
-      return content
-        + comment(depth
-          - 1);
-    }
+    if (depth > 0) return content + comment(depth - 1);
     return content;
   }
 
