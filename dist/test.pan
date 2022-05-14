@@ -12,7 +12,7 @@ be big -- really get that stormy atmosphere.
 
 Maybe like [this](some/url.png) or something?
 
-    CAPTION (Night)
+    CAPTION (Night) 
     A dark and stormy night...
 
 []

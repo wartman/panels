@@ -3,6 +3,11 @@ package panels;
 import panels.Reporter;
 
 class VisualReporter implements Reporter {
+  static inline final bar = '\u2502';
+  static inline final dashedBar = '\u2506';
+  static inline final endBar = '\u2514';
+  static inline final horizontalBar = '\u2500';
+
   final print:(str:String)->Void;
 
   public function new(?print) {
@@ -59,6 +64,7 @@ class VisualReporter implements Reporter {
         print('');
         print('WARNING: ${pos.file}:${firstLine} [${pos.min} ${pos.max}]');
     }
+    print('');
 
     for (t in textLines) {
       linesWritten++;
@@ -87,11 +93,11 @@ class VisualReporter implements Reporter {
       start = t.length;
     }
 
-    print(formatSpacer() + repeat(padding) + e.message);
+    print(formatSpacer() + repeat(padding) + endBar + horizontalBar + ' ' + e.message);
 
     if (e.detailedMessage != null) {
       print('');
-      print(e.detailedMessage);
+      printParagraph(e.detailedMessage);
     }
     print('');
   }
@@ -99,15 +105,15 @@ class VisualReporter implements Reporter {
   function formatNumber(lineNumber:Int) {
     var num = Std.string(lineNumber);
     var toAdd = 4 - num.length;
-    return [for (_ in 0...(toAdd - 1)) ' '].join('') + '$num | ';
+    return [for (_ in 0...(toAdd - 1)) ' '].join('') + '$num $bar ';
   }
 
   function formatSpacer() {
-    return repeat(4) + '| ';
+    return repeat(4) + '$bar ';
   }
 
   function formatBreakpoint() {
-    return repeat(4) + '...';
+    return repeat(4) + '$dashedBar';
   }
 
   function repeatAtLeastOnce(len:Int, value:String = ' ') {
@@ -118,5 +124,20 @@ class VisualReporter implements Reporter {
   function repeat(len:Int, value:String = ' ') {
     if (len <= 0) return '';
     return [for (_ in 0...len) value].join('');
+  }
+
+  function printParagraph(paragraph:String) {
+    var words = paragraph.split(' ');
+    var out = [];
+    var line = '';
+    for (word in words) {
+      line += ' ' + word;
+      if (line.length >= 75) {
+        out.push(line);
+        line = '';
+      }
+    }
+    if (line != '') out.push(line);
+    for (line in out) print(line);
   }
 }

@@ -10,6 +10,7 @@ typedef ValidatorConfig = {
   public final ?requireProperties:Array<String>;
   public final ?maxPanelsPerPage:Int;
   public final ?maxWordsPerDialog:Int;
+  public final ?checkPanelOrder:Bool;
 }
 
 class Validator {
@@ -30,18 +31,23 @@ class Validator {
     return switch node.node {
       case Document(frontmatter, nodes):
         var warnings:Array<ReporterMessage> = [];
+        var startPos:Position = {min: 0, max: 1, file: node.pos.file};
+        var details = 'Make sure you have included all required properties'
+          + ' in your document before the first line break (`---`). You can'
+          + ' supress this warning by setting `config.requireTitle` or `config.requireAuthor`'
+          + ' to false or by removing this property from `config.requireProperties`.';
 
         if (config.requireTitle == true && frontmatter.get('title', null) == null) {
-          warnings.push(createWarning('A title is required', node.pos));
+          warnings.push(createWarning('A title is required', details, startPos));
         }
 
         if (config.requireAuthor == true && frontmatter.get('author', null) == null) {
-          warnings.push(createWarning('An author is required', node.pos));
+          warnings.push(createWarning('An author is required', details, startPos));
         }
 
         if (config.requireProperties != null) for (prop in config.requireProperties) {
           if (frontmatter.get(prop, null) == null) {
-            warnings.push(createWarning('The required frontmatter property $prop was not found', node.pos));
+            warnings.push(createWarning('The required frontmatter property $prop was not found', details, startPos));
           }
         }
 
@@ -55,7 +61,19 @@ class Validator {
         for (node in nodes) switch node.node {
           case Panel(type, nodes):
             panelCount++;
-          // todo: check dialog length
+            switch type {
+              case UserDefined(number) if (config.checkPanelOrder != false):
+                if (number != panelCount) {
+                  warnings.push(createWarning(
+                    'This panel number appears to be out of order',
+                    'Note that you can omit a number in your panel declaration to have Panels generate one automatically.'
+                    + ' If you intentionally are using panel numbers out of order, you can supress this warning'
+                    + ' by setting `checkPanelOrder` to `false` in your config.',
+                    node.pos));
+                }
+              default:
+            }
+          // @todo: check dialog length
           default:
         }
         if (config.maxPanelsPerPage != null && panelCount > config.maxPanelsPerPage) {
@@ -67,10 +85,11 @@ class Validator {
     }
   }
 
-  function createWarning(message:String, pos:Position):ReporterMessage {
+  function createWarning(message:String, ?details:String, pos:Position):ReporterMessage {
     return {
       type: Warning,
       message: message,
+      detailedMessage: details,
       pos: pos
     };
   }

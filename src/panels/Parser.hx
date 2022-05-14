@@ -89,12 +89,12 @@ class Parser {
   }
 
   function parsePanel() {
-    var start = position;
     var type:PanelType = Auto;
     var nodes:Array<Node> = [];
 
     ignoreComments();
 
+    var start = position;
     consume('[',
       'Expected a panel-number declaration (either empty brackets `[]` or '
       + 'with a manually entered number (like `[1]`)). Note that every page '
@@ -105,6 +105,7 @@ class Parser {
     }
     whitespace();
     consume(']');
+    var declPos = createPos(start);
 
     whitespace();
 
@@ -126,7 +127,7 @@ class Parser {
       }
     }
 
-    return new Node(Panel(type, nodes), createPos(start));
+    return new Node(Panel(type, nodes), declPos);
   }
 
   function parseCaption() {
@@ -152,7 +153,7 @@ class Parser {
     spacesOrTabs();
     var modifiers = modifierList();
     spacesOrTabs();
-    requireNewline();
+    requireNewline('A newline (`enter`) is required after a character name (plus modifers).');
 
     var nodes = dialogBody();
 
@@ -192,7 +193,7 @@ class Parser {
     function process() {
       while (!isAtEnd() && !checkNewline()) {
         if (check('\\')) {
-          parseText();
+          nodes.push(parseText());
         } else if (match('[')) {
           nodes.push(parseLink());
         } else if (match('**')) {
@@ -373,8 +374,8 @@ class Parser {
     return matchAny('\r\n', '\n');
   }
 
-  function requireNewline() {
-    return consumeAny(['\r\n', '\n'], 'A newline (enter) is required here.');
+  function requireNewline(?reason:String) {
+    return consumeAny(['\r\n', '\n'], reason);
   }
 
   function isWhitespace(c:String) {
