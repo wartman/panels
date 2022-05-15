@@ -43,8 +43,10 @@ class Parser {
         pos: createPos(start)
       });
       whitespace();
+      ignoreComments();
     }
 
+    ignoreComments();
     requirePageBreakOrEndOfFile();
 
     return props;
@@ -74,6 +76,7 @@ class Parser {
     var nodes:Array<Node> = [];
 
     whitespace();
+    ignoreComments();
 
     while (!isAtEnd() && !checkPageBreak()) {
       var panel = parsePanel();

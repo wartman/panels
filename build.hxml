@@ -4,8 +4,6 @@
 
 -lib hxnodejs
 
--main Run
+-main Panels
 
--js dist/test.js
-
--cmd node dist/test
+-js dist/panels.js

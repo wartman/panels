@@ -1,7 +1,8 @@
-package panels;
+package panels.generator;
 
 import panels.NodeDef;
 
+// @todo: This needs a lot of cleanup. Probably should use XML in here too.
 class HtmlGenerator {
   final node:Node;
   var pageIsLeft:Bool = false;

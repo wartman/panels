@@ -1,12 +1,12 @@
 package panels;
 
-enum ReportableType {
+enum ReporterMessageType {
   Warning;
   Error;
 }
 
 typedef ReporterMessage = {
-  public final type:ReportableType;
+  public final type:ReporterMessageType;
   public final message:String;
   public final ?detailedMessage:String;
   public final pos:Position;
