@@ -1,4 +1,5 @@
 -cp src
+-cp lib
 -cp test
 
 -lib hxnodejs

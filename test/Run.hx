@@ -1,9 +1,7 @@
-import panels.Validator;
-import panels.ParserException;
-import panels.VisualReporter;
-import panels.Source;
-import panels.HtmlGenerator;
-import panels.Parser;
+import panels.writer.OpenDocumentWriter;
+import haxe.xml.Printer;
+import panels.generator.OpenDocumentGenerator;
+import panels.*;
 
 using sys.io.File;
 using haxe.io.Path;
@@ -24,10 +22,13 @@ function main() {
       requireAuthor: true
     });
     var warnings = validator.validate();
-    var generator = new HtmlGenerator(node);
+    var generator = new OpenDocumentGenerator(node);
     var content = generator.generate();
+
     for (warning in warnings) reporter.report(warning, source);
-    Path.join([Sys.programPath().directory(), 'test.html']).saveContent(content);
+
+    var writer = new OpenDocumentWriter();
+    writer.write(Path.join([Sys.programPath().directory(), 'test.fodt']), content);
   } catch (e:ParserException) {
     reporter.report(e.toReporterMessage(), source);
   }
