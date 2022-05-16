@@ -20,7 +20,7 @@ class App {
 
     var file = Path.join([Sys.getCwd(), args.source]);
     var format = args.format != null ? args.format : 'odt';
-    var output = args.output != null ? args.output : Path.join([Sys.getCwd(), args.source.withoutExtension()]);
+    var output = Path.join([Sys.getCwd(), args.output != null ? args.output : args.source.withoutExtension()]);
 
     if (file.extension() == '') file = file.withExtension('pan');
     if (!file.exists()) {

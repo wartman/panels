@@ -92,23 +92,32 @@ class Parser {
   }
 
   function parsePanel() {
-    var type:PanelType = Auto;
-    var nodes:Array<Node> = [];
-
     ignoreComments();
 
+    var type:PanelType = Auto;
+    var nodes:Array<Node> = [];
     var start = position;
-    consume('[',
-      'Expected a panel-number declaration (either empty brackets `[]` or '
-      + 'with a manually entered number (like `[1]`)). Note that every page '
-      + 'requires at least one panel.');
-    whitespace();
-    if (isDigit(peek())) {
-      type = UserDefined(number());
-    }
-    whitespace();
-    consume(']');
     var declPos = createPos(start);
+
+    if (match('<')) {
+      var info = fallback(['panel']);
+      var value = Std.parseInt(info.value);
+      if (value == null) {
+        throw new ParserException('Expected an integer', info.pos);
+      }
+      type = UserDefined(value);
+    } else {
+      consume('[',
+        'Expected a panel-number declaration (either empty brackets `[]` or '
+        + 'with a manually entered number (like `[1]`)). Note that every page '
+        + 'requires at least one panel.');
+      whitespace();
+      if (isDigit(peek())) {
+        type = UserDefined(number());
+      }
+      whitespace();
+      consume(']');
+    }
 
     whitespace();
 
@@ -118,6 +127,8 @@ class Parser {
       if (match('/*')) {
         comment();
         whitespace();
+      } else if (match('<')) {
+        nodes.push(parseFallbackDialog());
       } else if (caption()) {
         nodes.push(parseCaption());
       } else if (sfx()) {
@@ -131,6 +142,20 @@ class Parser {
     }
 
     return new Node(Panel(type, nodes), declPos);
+  }
+
+  function parseFallbackDialog() {
+    var start = position - 1;
+    var info = fallback(['dialog', 'sfx', 'caption']);
+    whitespace();
+    var content = dialogContent();
+    var type:NodeDef = switch info.label {
+      case 'dialog': Dialog(info.value, content.modifiers, content.nodes);
+      case 'sfx': Sfx(content.modifiers, content.nodes);
+      case 'caption': Caption(content.modifiers, content.nodes);
+      default: throw 'assert';
+    }
+    return new Node(type, createPos(start));
   }
 
   function parseCaption() {
@@ -167,12 +192,25 @@ class Parser {
   }
 
   function modifierList() {
+    if (match('<')) {
+      return fallbackModifierList();
+    }
+
     var modifiers:Array<Node> = [];
     if (match('(')) {
       modifiers.push(parseText(')'));
       consume(')');
     }
+
     return modifiers;
+  }
+
+  function fallbackModifierList() {
+    var infos = [fallback(['modifier'])];
+    while (!isAtEnd() && match('<')) {
+      infos.push(fallback(['modifier']));
+    }
+    return infos.map(info -> new Node(Text(Normal(info.value)), info.pos));
   }
 
   function dialogBody() {
@@ -323,6 +361,26 @@ class Parser {
     return match('SFX');
   }
 
+  function fallback(?allowedLabels:Array<String>) {
+    var start = position;
+    var label = identifier();
+    if (allowedLabels != null) {
+      if (!allowedLabels.contains(label)) {
+        throw new ParserException('Invalid label', 'Only the labels: [ ${allowedLabels.join(', ')} ] can be used here.', createPos(start));
+      }
+    }
+    consume(':');
+    start = position;
+    var value = readWhile(() -> !check('>'));
+    var pos = createPos(start);
+    consume('>');
+    return {
+      label: label,
+      value: value,
+      pos: pos
+    };
+  }
+
   function checkCharacterName() {
     var start = position;
     var isName = characterName().length > 0;
@@ -352,6 +410,10 @@ class Parser {
     }
 
     return parts.join(' ');
+  }
+
+  function identifier() {
+    return readWhile(() -> isAlphaNumeric(peek()));
   }
 
   function comment(depth:Int = 0) {
@@ -472,8 +534,7 @@ class Parser {
   }
 
   function previous() {
-    return source.content.charAt(position
-      - 1);
+    return source.content.charAt(position - 1);
   }
 
   function isAtEnd() {
