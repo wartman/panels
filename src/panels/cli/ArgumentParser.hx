@@ -3,6 +3,7 @@ package panels.cli;
 using Lambda;
 using StringTools;
 
+// @todo: Clean this up.
 class ArgumentParser {
   final args:Array<String>;
   var pos = 0;
@@ -15,26 +16,45 @@ class ArgumentParser {
     pos = 0;
 
     var source = parseArg();
-    var fields = [while (pos < args.length) parseNamedArg()];
+    var args = [while (pos < args.length) parseNamedArg()];
+
+    for (arg in args) validateArg(arg);
 
     return {
       source: source,
-      format: getArg(fields, 'f', 'format'),
-      output: getArg(fields, 'o', 'output'),
-      requireTitle: getArg(fields, null, 'requireTitle') == 'true',
-      requireAuthor: getArg(fields, null, 'requireAuthor') == 'true',
-      checkPanelOrder: getArg(fields, null, 'checkPanelOrder') == 'true',
+      format: getArg(args, 'f', 'format'),
+      output: getArg(args, 'o', 'output'),
+      requireTitle: getArg(args, null, 'requireTitle') == 'true',
+      requireAuthor: getArg(args, null, 'requireAuthor') == 'true',
+      checkPanelOrder: getArg(args, null, 'checkPanelOrder') != 'false',
       maxPanelsPerPage: {
-        var value = getArg(fields, null, 'maxPanelsPerPage');
+        var value = getArg(args, null, 'maxPanelsPerPage');
         if (value != null) Std.parseInt(value) else
           null;
       },
       maxWordsPerDialog: {
-        var value = getArg(fields, null, 'maxWordsPerDialog');
+        var value = getArg(args, null, 'maxWordsPerDialog');
         if (value != null) Std.parseInt(value) else
           null;
       }
     };
+  }
+
+  static final allowed = [
+    'f',
+    'format',
+    'o',
+    'output',
+    'requireTitle',
+    'requireAuthor',
+    'maxPanelsPerPage',
+    'maxWordsPerDialog'
+  ];
+
+  function validateArg(arg:{name:String, value:String}) {
+    if (!allowed.contains(arg.name)) {
+      throw 'Invalid argument: ${arg.name}';
+    }
   }
 
   function parseArg() {

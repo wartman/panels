@@ -2,6 +2,7 @@ package panels;
 
 import panels.NodeDef;
 
+// @todo: Convert this to use Chars
 class Parser {
   final source:Source;
   var position = 0;
@@ -100,7 +101,7 @@ class Parser {
     var start = position;
     consume('[',
       'Expected a panel-number declaration (either empty brackets `[]` or '
-      + 'with a manually entered number (like `[1]`)). Note that every page '
+      + 'a manually entered number (like `[1]`)). Note that every page '
       + 'requires at least one panel.');
     whitespace();
     if (isDigit(peek())) {
@@ -310,7 +311,7 @@ class Parser {
 
   function requirePageBreakOrEndOfFile() {
     whitespace();
-    if (!match('---') && !isAtEnd()) {
+    if (!pageBreak() && !isAtEnd()) {
       throw new ParserException('Expected page break or end of file', null, createPos(position));
     }
   }
