@@ -1,6 +1,6 @@
-Title: Example Comic Script
-Author: Peter Wartman
-Version: 1
+title: Example Comic Script
+author: Peter Wartman
+version: 1
 
 ---
 

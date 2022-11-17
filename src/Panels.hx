@@ -1,7 +1,8 @@
 import panels.cli.*;
+import cmdr.input.SysInput;
+import cmdr.output.SysOutput;
 
 function main() {
-  var args = new ArgumentParser(Sys.args());
-  var app = new App(args.parse());
-  app.process();
+  var app = new App();
+  app.execute(new SysInput(), new SysOutput());
 }

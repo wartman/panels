@@ -1,7 +1,8 @@
 -cp src
--cp lib
--cp test
+# -cp lib
+# -cp test
 
+-lib cmdr
 -lib hxnodejs
 
 -main Panels
