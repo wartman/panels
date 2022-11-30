@@ -6,6 +6,14 @@ Title: Example Comic Script
 Author: Peter Wartman
 Version: 1
 
+/* Three equals (===) indicate a Section. These are mostly useful for breaking up a document into parts */
+
+===
+
+/* Sections may include only one line of text -- this will be used as the section title. Sections may also have any amount of white-space or comments. */
+
+Chapter 1
+
 /* These three dashes (---) indicate a page break. We don't manually number pages -- just include these between each of your pages. */
 
 ---

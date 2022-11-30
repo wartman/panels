@@ -16,10 +16,19 @@ class Parser {
     var nodes:Array<Node> = [];
 
     while (!isAtEnd()) {
-      nodes.push(parsePage());
+      nodes.push(parseTopLevel());
     }
 
+    requirePageBreakOrEndOfFile();
+
     return new Node(Document(frontmatter, nodes), createPos(0));
+  }
+
+  function parseTopLevel():Node {
+    if (sectionBreak()) return parseSection();
+    if (pageBreak()) return parsePage();
+
+    throw new ParserException('Expected a page break, a section break or the end of the file', null, createPos(position));
   }
 
   function parseFrontmatter():Array<FrontmatterProperty> {
@@ -31,7 +40,7 @@ class Parser {
       return props;
     }
 
-    while (!isAtEnd() && !checkPageBreak()) {
+    while (!isAtEnd() && !checkPageOrSectionBreak()) {
       spacesOrTabs();
       ignoreComments();
       var start = position;
@@ -48,7 +57,6 @@ class Parser {
     }
 
     ignoreComments();
-    requirePageBreakOrEndOfFile();
 
     return props;
   }
@@ -72,6 +80,24 @@ class Parser {
     return prop;
   }
 
+  function parseSection():Node {
+    var start = position;
+
+    whitespace();
+    ignoreComments();
+
+    if (isAtEnd() || checkPageOrSectionBreak()) {
+      return new Node(Section(''), createPos(start));
+    }
+
+    var title = readText();
+
+    whitespace();
+    ignoreComments();
+
+    return new Node(Section(title), createPos(start));
+  }
+
   function parsePage() {
     var start = position;
     var nodes:Array<Node> = [];
@@ -79,7 +105,7 @@ class Parser {
     whitespace();
     ignoreComments();
 
-    while (!isAtEnd() && !checkPageBreak()) {
+    while (!isAtEnd() && !checkPageOrSectionBreak()) {
       var panel = parsePanel();
       if (panel != null) {
         nodes.push(panel);
@@ -87,8 +113,6 @@ class Parser {
     }
 
     whitespace();
-    requirePageBreakOrEndOfFile();
-
     return new Node(Page(nodes), createPos(start));
   }
 
@@ -113,7 +137,7 @@ class Parser {
 
     whitespace();
 
-    while (!isAtEnd() && !checkPanelStart() && !checkPageBreak()) {
+    while (!isAtEnd() && !checkPanelStart() && !checkPageOrSectionBreak()) {
       spacesOrTabs();
 
       if (match('/*')) {
@@ -216,7 +240,7 @@ class Parser {
       if (newline()) {
         // Note: `whitespace()` will get newlines too, which we don't want
         spacesOrTabs();
-        if (!checkNewline() && !checkPageBreak() && !checkCont()) {
+        if (!checkNewline() && !checkPageOrSectionBreak() && !checkCont()) {
           // Join text nodes with a space.
           nodes.push(new Node(Text(Normal(' ')), createPos(position)));
           process();
@@ -293,8 +317,8 @@ class Parser {
     return check('[');
   }
 
-  function checkPageBreak() {
-    return check('---');
+  function checkPageOrSectionBreak() {
+    return checkAny('---', '===');
   }
 
   function checkCont() {
@@ -303,6 +327,10 @@ class Parser {
 
   function matchCont() {
     return match('(cont.)');
+  }
+
+  function sectionBreak() {
+    return match('===');
   }
 
   function pageBreak() {
@@ -473,8 +501,7 @@ class Parser {
   }
 
   function previous() {
-    return source.content.charAt(position
-      - 1);
+    return source.content.charAt(position - 1);
   }
 
   function isAtEnd() {

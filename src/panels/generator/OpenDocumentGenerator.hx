@@ -33,6 +33,8 @@ class OpenDocumentGenerator {
     return switch node.node {
       case Document(frontmatter, nodes):
         generateDocument(frontmatter, nodes, context);
+      case Section(_):
+        p();
       case Page(nodes):
         generatePage(nodes, context);
       case Text(content):

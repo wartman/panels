@@ -37,6 +37,7 @@ abstract Frontmatter(Array<FrontmatterProperty>) from Array<FrontmatterProperty>
 
 enum NodeDef {
   Document(frontmatter:Frontmatter, nodes:Array<Node>);
+  Section(title:String);
   Text(content:TextType);
   Paragraph(nodes:Array<Node>);
   Page(nodes:Array<Node>);

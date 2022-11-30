@@ -112,6 +112,8 @@ class HtmlGenerator {
           case Italic(value): '<i>$value</i>';
           case Link(label, url): '<a href="$url">${generateNode(label)}</a>';
         }
+      case Section(title):
+        '<h3>$title</h3>';
       case Paragraph(nodes) if (nodes.length == 0):
         '';
       case Paragraph(nodes):

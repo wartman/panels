@@ -2,6 +2,10 @@ title: Example Comic Script
 author: Peter Wartman
 version: 1
 
+===
+
+Chapter 1
+
 ---
 
 [1]
