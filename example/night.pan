@@ -51,3 +51,13 @@ Fade to black.
 In a comic.
 
 You can figure it out.
+
+===
+
+Chapter 2
+
+---
+
+[]
+
+Suddenly more things happen.

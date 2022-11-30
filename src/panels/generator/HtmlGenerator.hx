@@ -42,6 +42,17 @@ class HtmlGenerator {
         margin: 0 auto;
       }
 
+      .section-header {
+        margin: 0 0 20px 0;
+        padding: 0 0 20px 0;
+        border-bottom: 1px solid #000000;
+      }
+
+      .section-header h3 {
+        margin: 0;
+        padding: 0;
+      }
+
       .page {
         margin: 0 0 20px 0;
         padding: 0 0 20px 0;
@@ -113,7 +124,7 @@ class HtmlGenerator {
           case Link(label, url): '<a href="$url">${generateNode(label)}</a>';
         }
       case Section(title):
-        '<h3>$title</h3>';
+        '<header class="section-header"><h3>$title</h3></header>';
       case Paragraph(nodes) if (nodes.length == 0):
         '';
       case Paragraph(nodes):

@@ -77,3 +77,15 @@ Fade to black.
 In a comic.
 
 You can figure it out.
+
+===
+
+/* You can have as many sections as you want in your script, wherever you want. Just note that sections will create page breaks, just like using `---` will. */
+
+Chapter 2
+
+---
+
+[]
+
+Suddenly more things happen.
