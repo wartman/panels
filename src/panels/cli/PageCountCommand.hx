@@ -36,7 +36,7 @@ class PageCountCommand extends Command {
       var parser = new Parser(source);
       var node = parser.parse();
       var pages:Int = switch node.node {
-        case Document(frontmatter, nodes):
+        case Document(_, nodes):
           nodes.filter(n -> switch n.node {
             case Page(_): true;
             default: false;

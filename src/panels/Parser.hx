@@ -19,8 +19,6 @@ class Parser {
       nodes.push(parseTopLevel());
     }
 
-    requirePageBreakOrEndOfFile();
-
     return new Node(Document(frontmatter, nodes), createPos(0));
   }
 
@@ -335,13 +333,6 @@ class Parser {
 
   function pageBreak() {
     return match('---');
-  }
-
-  function requirePageBreakOrEndOfFile() {
-    whitespace();
-    if (!pageBreak() && !isAtEnd()) {
-      throw new ParserException('Expected page break or end of file', null, createPos(position));
-    }
   }
 
   function caption() {

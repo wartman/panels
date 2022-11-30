@@ -44,6 +44,18 @@ class GenerateCommand extends Command {
     try {
       var parser = new Parser(source);
       var node = parser.parse();
+      var validator = new Validator(node, {
+        requireAuthor: requireAuthor,
+        requireTitle: requireTitle
+        // @todo: the other ones
+      });
+      var errors = validator.validate();
+
+      if (errors.length > 0) {
+        for (e in errors) reporter.report(e, source);
+        return Failure;
+      }
+
       var content:String = switch format {
         case 'html': new HtmlGenerator(node).generate();
         case 'odt': new OpenDocumentGenerator(node).generate().toString();
