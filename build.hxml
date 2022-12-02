@@ -1,11 +1,9 @@
 -cp src
-# -cp lib
-# -cp test
 
-# -lib cmdr
 -lib tink_cli
 -lib hxnodejs
 
 -main Panels
 
--js dist/panels.js
+-js bin/panels.js
+--cmd node scripts/add-shebang.mjs

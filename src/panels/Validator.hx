@@ -77,7 +77,7 @@ class Validator {
           default:
         }
         if (config.maxPanelsPerPage != null && panelCount > config.maxPanelsPerPage) {
-          warnings.push(createWarning('Page $pageCount has $panelCount panels, more than the alowed ${config.maxPanelsPerPage}', node.pos));
+          warnings.push(createWarning('Page $pageCount has $panelCount panels, more than the allowed ${config.maxPanelsPerPage}', node.pos));
         }
         warnings;
       default:

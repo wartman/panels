@@ -1,7 +1,6 @@
 package panels;
 
 import panels.Validator;
-import panels.generator.*;
 
 using tink.CoreApi;
 

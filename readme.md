@@ -8,16 +8,14 @@ Usage
 
 A detailed tutorial is coming soon.
 
-For now, download and build Panels with Haxe. If you have the `Lix` plugin installed in VSCode, you should just be able to run a build command and be good to go. Otherwise, run `npm install` to set everything up and then run `npm run build` (or `npx haxe build.hxml`) to compile panels.
+For now, download and build Panels with Haxe. If you have the `Lix` plugin installed in VSCode, you should just be able to run a build command and be good to go. Otherwise, run `npm install` to set everything up and then run `npx haxe build.hxml` to compile panels.
 
-Then, try the following command from the `panels` directory:
+Then, run the following command from the `panels` directory:
 
-`node dist/panels example/night -f odt`
+`node dist/panels`
 
-...to generate an Open Document file from the `example/night.pan` example. You can also do `node dist/panels generate example/night -f html` to generate html. To just get a page count, try `node dist/panels count example/night`.
+You should see a list of commands and instructions about their use. To test things out, try generating one of the example files:
 
-If you want an example of Panels complaining about panel count, try:
+`node dist/panels generate example/night -f html`
 
-`node dist/panels generate example/night -f odt --maxPanelsPerPage 2`
-
-Note that right now the CLI is super basic and doesn't have any documentation, but that will change soon as well.
+...or running any of the other subcommands (like `info`) on the examples.

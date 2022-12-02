@@ -1,9 +1,23 @@
 {
+	"name": "@wartman/panels",
+	"main": "bin/panels.js",
+	"author": "wartman",
+	"version": "0.0.1-alpha1",
+	"description": "A simple markup language for comic scripts",
+	"homepage": "https://github.com/wartman/panels",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wartman/panels.git"
+	},
+	"bin": {
+		"panels": "bin/panels.js"
+	},
 	"devDependencies": {
 		"lix": "^15.12.0"
 	},
 	"scripts": {
-		"build": "npx haxe build.hxml",
-		"postinstall": "lix download"
+		"prepare": "npx haxe build.hxml",
+		"postinstall": "npx lix download"
 	}
 }
