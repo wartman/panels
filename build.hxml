@@ -6,4 +6,5 @@
 -main Panels
 
 -js bin/panels.js
+
 --cmd node scripts/add-shebang.mjs
