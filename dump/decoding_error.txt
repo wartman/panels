@@ -1,0 +1,39 @@
+{
+	expr: ECall({
+		expr: EField({
+			expr: ENew({
+				name: Router
+				pack: [tink, cli, macro]
+				params: [TPType(null <- expected enum value)]
+				sub: null
+			}, [{
+				expr: EConst(CIdent(null))
+				pos: #pos
+			}, {
+				expr: ENew({
+					name: RetryPrompt
+					pack: [tink, cli, prompt]
+					params: []
+					sub: null
+				}, [{
+					expr: EConst(CInt(5))
+					pos: #pos
+				}])
+				pos: #pos
+			}])
+			pos: #pos
+		}, process)
+		pos: #pos
+	}, [{
+		expr: ECall({
+			expr: EField({
+				expr: EConst(CIdent(Sys))
+				pos: #pos
+			}, args)
+			pos: #pos
+		}, [])
+		pos: #pos
+	}])
+	pos: #pos
+}
+line 7: expected enum value

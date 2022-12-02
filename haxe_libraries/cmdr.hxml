@@ -1,3 +1,0 @@
-# @install: lix --silent download "gh://github.com/wartman/cmdr#7fefc51ae6132ae170b3a45d061fe3d1ea32d66b" into cmdr/0.0.0/github/7fefc51ae6132ae170b3a45d061fe3d1ea32d66b
--cp ${HAXE_LIBCACHE}/cmdr/0.0.0/github/7fefc51ae6132ae170b3a45d061fe3d1ea32d66b/src
--D cmdr=0.0.0

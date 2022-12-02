@@ -2,7 +2,8 @@
 # -cp lib
 # -cp test
 
--lib cmdr
+# -lib cmdr
+-lib tink_cli
 -lib hxnodejs
 
 -main Panels

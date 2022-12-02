@@ -3,6 +3,7 @@ package panels.generator;
 import Xml;
 import panels.NodeDef;
 
+using tink.CoreApi;
 using panels.generator.XmlTools;
 
 typedef OpenDocumentGeneratorContext = {
@@ -12,21 +13,17 @@ typedef OpenDocumentGeneratorContext = {
 
 // @note: This is a bit of a mess -- I just want something that mostly works.
 // @see: https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#__RefHeading__440346_826425813
-class OpenDocumentGenerator {
-  final node:Node;
+class OpenDocumentGenerator implements Generator {
+  public function new() {}
 
-  public function new(node) {
-    this.node = node;
-  }
-
-  public function generate() {
+  public function generate(node:Node):Promise<String> {
     var doc = Xml.createDocument();
     doc.addChild(Xml.parse('<?xml version="1.0" encoding="UTF-8"?>'));
     doc.addChild(generateNode(node, {
       currentPage: 0,
       currentPanel: 0
     }));
-    return doc;
+    return doc.toString();
   }
 
   function generateNode(node:Node, context:OpenDocumentGeneratorContext):Xml {

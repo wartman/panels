@@ -2,19 +2,18 @@ package panels.generator;
 
 import panels.NodeDef;
 
+using tink.CoreApi;
+
 // @todo: This needs a lot of cleanup. Probably should use XML in here too.
-class HtmlGenerator {
-  final node:Node;
+class HtmlGenerator implements Generator {
   var pageIsLeft:Bool = false;
   var pageNumber = 1;
   var panelNumber = 1;
   var panelCount = 0;
 
-  public function new(node) {
-    this.node = node;
-  }
+  public function new() {}
 
-  public function generate() {
+  public function generate(node:Node):Promise<String> {
     // @todo: fill in the <head> when we have frontmatter.
     var frontmatter:Frontmatter = switch node.node {
       case Document(frontmatter, _): frontmatter;
