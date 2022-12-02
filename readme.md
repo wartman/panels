@@ -16,6 +16,8 @@ Chapter 1
 
 ---
 
+[1]
+
 We open on a dark and stormy night. This first panel here should be big -- really get that stormy atmosphere.
 
 Maybe like [this](some/url.png) or something?
