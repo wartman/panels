@@ -1,7 +1,6 @@
 package panels.cli;
 
-import tink.Cli;
-import tink.cli.Result;
+import cmdr.*;
 import panels.writer.*;
 import panels.generator.*;
 
@@ -9,12 +8,14 @@ using sys.FileSystem;
 using sys.io.File;
 using haxe.io.Path;
 using tink.CoreApi;
+using cmdr.StyleTools;
 
-class App {
+class App implements Command {
   /**
     What file format to generate. Currently can be "odt" or "html".
   **/
   @:alias('f')
+  @:flag
   public var format:String = 'odt';
 
   /**
@@ -22,6 +23,7 @@ class App {
     Panels will save it next to the input file. 
   **/
   @:alias('d')
+  @:flag
   public var destination:String = null;
 
   /**
@@ -29,6 +31,7 @@ class App {
     property is not present in your script's header.
   **/
   @:alias('t')
+  @:flag
   public var requireTitle:Bool = false;
 
   /**
@@ -36,12 +39,14 @@ class App {
     property is not present in your script's header.
   **/
   @:alias('a')
+  @:flag
   public var requireAuthor:Bool = false;
 
   /**
     If set, Panels will warn you if any of your pages have
     more than the allowed number of panels.
   **/
+  @:flag
   public var maxPanelsPerPage:Int = null;
 
   public function new() {}
@@ -60,7 +65,7 @@ class App {
       dest = dest.withoutExtension();
     }
 
-    return getSource(file).next(source -> {
+    return Async(done -> getSource(file).next(source -> {
       var generator = switch format {
         case 'odt': new OpenDocumentGenerator();
         case 'html': new HtmlGenerator();
@@ -79,10 +84,22 @@ class App {
       }
       return writer.write(dest, content);
     }).next(_ -> {
-      // @todo: nicer output
-      Sys.println('Compiled ${file} to ${dest} successfully');
+      output.writeLn('')
+        .writeLn('    Panels'.bold())
+        .writeLn('')
+        .write('    Compiled ')
+        .write(file.bold())
+        .write(' to ')
+        .write(dest.withExtension(format).bold())
+        .writeLn(' successfully.');
       return Noise;
-    });
+    }).handle(o -> switch o {
+      case Success(_):
+        done(Success);
+      case Failure(failure):
+        output.error(failure.message);
+        done(Failure(1));
+    }));
   }
 
   /**
@@ -92,30 +109,37 @@ class App {
   @:command
   public function info(src:String):Result {
     var file = Path.join([Sys.getCwd(), src]);
-    return getSource(file).next(source -> {
+
+    return Async(done -> getSource(file).next(source -> {
       var compiler = new Compiler(source, new VisualReporter(), new NullGenerator(), {
         requireAuthor: requireAuthor,
         maxPanelsPerPage: maxPanelsPerPage
       });
       return compiler.getMetadata();
     }).next(info -> {
-      // @todo: nicer output
-      Sys.println('');
-      Sys.println('Info for ${file}:');
-      Sys.println('');
-      Sys.println('Page count: ${info.pages}');
-
+      output.writeLn('')
+        .write('    ')
+        .writeLn('Panels Metadata'.bold())
+        .writeLn('')
+        .write('    Page count: ')
+        .write(' ${info.pages} '.bold().backgroundColor(White))
+        .writeLn('');
       return Noise;
-    });
+    }).handle(o -> switch o {
+      case Success(_): done(Success);
+      case Failure(failure):
+        output.error(failure.message);
+        done(Failure(1));
+    }));
   }
 
   /**
     Tools to compile a Panels script.
   **/
   @:defaultCommand
-  public function documentation() {
-    var doc = Cli.getDoc(this);
-    Sys.println(doc);
+  public function documentation():Result {
+    output.writeLn(getDocs());
+    return Success;
   }
 
   function getSource(file:String):Promise<Source> {
