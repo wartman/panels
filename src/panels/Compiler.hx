@@ -1,6 +1,8 @@
 package panels;
 
+import js.html.Document;
 import panels.Validator;
+import panels.CompilerMetadata;
 
 using tink.CoreApi;
 
@@ -22,16 +24,46 @@ class Compiler {
   }
 
   public function getMetadata():Promise<CompilerMetadata> {
-    return compileToAst().next(node -> ({
-      pages: switch node.node {
-        case Document(_, nodes):
-          nodes.filter(n -> switch n.node {
+    return compileToAst().next(node -> switch node.node {
+      case Document(frontmatter, nodes):
+        var currentSection:String = '(No section)';
+        var pageCount:Int = 0;
+        var sections:Array<SectionInfo> = [];
+
+        for (node in nodes) switch node.node {
+          case Section(title):
+            if (pageCount > 0) {
+              sections.push({
+                title: currentSection,
+                pages: pageCount
+              });
+            }
+            currentSection = title;
+            pageCount = 0;
+          case Page(_):
+            pageCount++;
+          default:
+        }
+
+        if (pageCount > 0) {
+          sections.push({
+            title: currentSection,
+            pages: pageCount
+          });
+        }
+
+        ({
+          title: frontmatter.get('title', null),
+          author: frontmatter.get('author', null),
+          pages: nodes.filter(n -> switch n.node {
             case Page(_): true;
             default: false;
-          }).length;
-        default: 0;
-      }
-    } : CompilerMetadata));
+          }).length,
+          sections: sections
+        } : CompilerMetadata);
+      default:
+        new Error(InternalError, 'Something went wrong');
+    });
   }
 
   function compileToAst():Promise<Node> {

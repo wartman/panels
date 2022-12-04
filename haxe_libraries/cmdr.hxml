@@ -1,4 +1,4 @@
-# @install: lix --silent download "gh://github.com/wartman/cmdr#d7a758d5dc3ae1203b5922ed6f4d1209ee82ac30" into cmdr/0.0.0/github/d7a758d5dc3ae1203b5922ed6f4d1209ee82ac30
--cp ${HAXE_LIBCACHE}/cmdr/0.0.0/github/d7a758d5dc3ae1203b5922ed6f4d1209ee82ac30/src
+# @install: lix --silent download "gh://github.com/wartman/cmdr#6b44959f19e78f6d9db31c5843c0455fd1a6abd1" into cmdr/0.0.0/github/6b44959f19e78f6d9db31c5843c0455fd1a6abd1
+-cp ${HAXE_LIBCACHE}/cmdr/0.0.0/github/6b44959f19e78f6d9db31c5843c0455fd1a6abd1/src
 -D cmdr=0.0.0
 -D use-rtti-doc

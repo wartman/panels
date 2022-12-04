@@ -65,7 +65,7 @@ class App implements Command {
       dest = dest.withoutExtension();
     }
 
-    return Async(done -> getSource(file).next(source -> {
+    return getSource(file).next(source -> {
       var generator = switch format {
         case 'odt': new OpenDocumentGenerator();
         case 'html': new HtmlGenerator();
@@ -85,21 +85,14 @@ class App implements Command {
       return writer.write(dest, content);
     }).next(_ -> {
       output.writeLn('')
-        .writeLn('    Panels'.bold())
-        .writeLn('')
-        .write('    Compiled ')
+        .write('    ')
+        .write(' Success '.bold().backgroundColor(Yellow))
+        .write(' Compiled ')
         .write(file.bold())
         .write(' to ')
-        .write(dest.withExtension(format).bold())
-        .writeLn(' successfully.');
+        .writeLn(dest.withExtension(format).bold());
       return Noise;
-    }).handle(o -> switch o {
-      case Success(_):
-        done(Success);
-      case Failure(failure):
-        output.error(failure.message);
-        done(Failure(1));
-    }));
+    });
   }
 
   /**
@@ -110,27 +103,32 @@ class App implements Command {
   public function info(src:String):Result {
     var file = Path.join([Sys.getCwd(), src]);
 
-    return Async(done -> getSource(file).next(source -> {
+    return getSource(file).next(source -> {
       var compiler = new Compiler(source, new VisualReporter(), new NullGenerator(), {
         requireAuthor: requireAuthor,
         maxPanelsPerPage: maxPanelsPerPage
       });
       return compiler.getMetadata();
     }).next(info -> {
-      output.writeLn('')
-        .write('    ')
-        .writeLn('Panels Metadata'.bold())
-        .writeLn('')
-        .write('    Page count: ')
-        .write(' ${info.pages} '.bold().backgroundColor(White))
-        .writeLn('');
+      function writeInfo(label:String, info:Null<String>) {
+        if (info == null) {
+          info = ' (not provided) '.bold().backgroundColor(Red);
+        }
+        output.write('    ').write(label).write(': ').write(info).writeLn('');
+      }
+
+      output.writeLn('').write('    ').writeLn('Script Info'.bold()).writeLn('');
+
+      writeInfo('Title', info.title);
+      writeInfo('Author', info.author);
+      writeInfo('Pages', info.pages + '');
+      writeInfo('Sections', info.sections.length + '');
+      for (section in info.sections) {
+        writeInfo('  ' + section.title, section.pages + ' pages');
+      }
+
       return Noise;
-    }).handle(o -> switch o {
-      case Success(_): done(Success);
-      case Failure(failure):
-        output.error(failure.message);
-        done(Failure(1));
-    }));
+    });
   }
 
   /**
@@ -139,7 +137,7 @@ class App implements Command {
   @:defaultCommand
   public function documentation():Result {
     output.writeLn(getDocs());
-    return Success;
+    return 0;
   }
 
   function getSource(file:String):Promise<Source> {
