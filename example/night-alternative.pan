@@ -30,10 +30,10 @@ We open on a dark and stormy night. This first panel here should be big -- reall
 
 Maybe like [this](some/url.png) or something?
 
-    /* The following is a caption, which is simply marked by typing CAPTION in all caps. You can optionally add a location/time after it in parens. */
+/* The following is a caption, which is simply marked by typing CAPTION in all caps. You can optionally add a location/time after it in parens. */
 
-    CAPTION (Night)
-    A dark and stormy night...
+CAPTION (Night)
+A dark and stormy night...
 
 []
 
@@ -42,6 +42,8 @@ Fred turns to his friend. He looks around nervously.
     /* Mark dialog by typing a character name (of any number of words) in ALL CAPS. You can optionally add VO/OFF-PANEL or other details in the parens after the name. 
     
     Also note the "(cont.)". This is required if we have more than one line of dialog -- otherwise, a newline indicates to Panels that we're done with Dialog and it will return to Panels Description mode.
+
+    Note that indentation is optional, but looks nice.
     */
 
     FRED FREDSON (OFF)
@@ -49,9 +51,9 @@ Fred turns to his friend. He looks around nervously.
     (cont.)
     Kind of *scary* 
 
-/* Note that indentation for dialog is optional -- just use it if it helps you keep track of things. */
+/* Note that indentation for dialog is optional -- just use it if it helps you keep track of things. In addition, you can use `@ name` as an alternative way to write characters, if you don't like ALL CAPS. */
 
-BOB BOBSMAN
+@Bob Bobsman (OFF)
 You got that right, friend.
 
 []

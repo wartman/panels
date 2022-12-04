@@ -1,17 +1,9 @@
 package panels;
 
 import panels.Reporter;
+import panels.PanelsConfig;
 
 using Lambda;
-
-typedef ValidatorConfig = {
-  public final ?requireTitle:Bool;
-  public final ?requireAuthor:Bool;
-  public final ?requireProperties:Array<String>;
-  public final ?maxPanelsPerPage:Int;
-  public final ?maxWordsPerDialog:Int;
-  public final ?checkPanelOrder:Bool;
-}
 
 class Validator {
   final node:Node;
@@ -45,11 +37,11 @@ class Validator {
           warnings.push(createWarning('An author is required', details, startPos));
         }
 
-        if (config.requireProperties != null) for (prop in config.requireProperties) {
-          if (frontmatter.get(prop, null) == null) {
-            warnings.push(createWarning('The required frontmatter property $prop was not found', details, startPos));
-          }
-        }
+        // if (config.requireProperties != null) for (prop in config.requireProperties) {
+        //   if (frontmatter.get(prop, null) == null) {
+        //     warnings.push(createWarning('The required frontmatter property $prop was not found', details, startPos));
+        //   }
+        // }
 
         warnings.concat(nodes.map(validateNode).flatten());
       case Page(nodes):

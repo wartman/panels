@@ -354,6 +354,10 @@ class Parser {
     var prev = position;
     var parts:Array<String> = [];
 
+    if (match('@')) {
+      return readWhile(() -> !check('(') && !checkNewline());
+    }
+
     function part() return readWhile(() -> isUcAlpha(peek()));
 
     parts.push(part());

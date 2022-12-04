@@ -1,0 +1,11 @@
+{
+  "compiler": {
+    "includeSections": true,
+    "includeFrontmatter": true
+  },
+  "validator": {
+    "requireTitle": true,
+    "maxPanelsPerPage": 6,
+    "checkPanelOrder": true
+  }
+}

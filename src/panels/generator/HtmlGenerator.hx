@@ -1,17 +1,22 @@
 package panels.generator;
 
 import panels.NodeDef;
+import panels.PanelsConfig;
 
 using tink.CoreApi;
 
 // @todo: This needs a lot of cleanup. Probably should use XML in here too.
 class HtmlGenerator implements Generator {
+  final config:CompilerConfig;
+
   var pageIsLeft:Bool = false;
   var pageNumber = 1;
   var panelNumber = 1;
   var panelCount = 0;
 
-  public function new() {}
+  public function new(config) {
+    this.config = config;
+  }
 
   public function generate(node:Node):Promise<String> {
     // @todo: fill in the <head> when we have frontmatter.
@@ -122,8 +127,10 @@ class HtmlGenerator implements Generator {
           case Italic(value): '<i>$value</i>';
           case Link(label, url): '<a href="$url">${generateNode(label)}</a>';
         }
-      case Section(title):
+      case Section(title) if (config.includeSections == true):
         '<header class="section-header"><h3>$title</h3></header>';
+      case Section(_):
+        '';
       case Paragraph(nodes) if (nodes.length == 0):
         '';
       case Paragraph(nodes):

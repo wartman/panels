@@ -9,7 +9,7 @@ using tink.CoreApi;
 class Compiler {
   final source:Source;
   final reporter:Reporter;
-  final config:ValidatorConfig;
+  final config:PanelsConfig;
   final generator:Generator;
 
   public function new(source, reporter, generator, config) {
@@ -70,7 +70,7 @@ class Compiler {
     try {
       var parser = new Parser(source);
       var node = parser.parse();
-      var validator = new Validator(node, config);
+      var validator = new Validator(node, config.validator);
       var errors = validator.validate();
 
       if (errors.length > 0) {
