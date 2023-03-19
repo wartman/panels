@@ -1,6 +1,5 @@
 package panels;
 
-import js.html.Document;
 import panels.Validator;
 import panels.CompilerMetadata;
 

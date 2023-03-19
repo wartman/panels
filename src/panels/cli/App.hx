@@ -83,7 +83,7 @@ class App implements Command {
     Panels will attempt to load that configuration. Note that you can override
     .panels config with cli flags, or by using --ignoreDotPanels -i.
 
-    (IMPORANT NOTE: .panels won't be overrided yet actually :v)
+    (IMPORTANT NOTE: .panels won't be overridden yet actually :v)
   **/
   @:command
   public function compile(src:String):Result {
