@@ -40,6 +40,7 @@ enum NodeDef {
   Section(title:String);
   Text(content:TextType);
   Paragraph(nodes:Array<Node>);
+  Aside(nodes:Array<Node>);
   Page(nodes:Array<Node>);
   Panel(type:PanelType, nodes:Array<Node>);
   Dialog(name:String, modifiers:Array<Node>, content:Array<Node>);

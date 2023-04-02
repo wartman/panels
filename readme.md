@@ -38,7 +38,6 @@ Fred turns to his friend. He looks around nervously.
     BOB BOBSMAN
     You got that right, friend.
 
-
 ```
 
 Usage

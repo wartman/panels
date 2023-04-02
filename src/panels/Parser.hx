@@ -147,6 +147,8 @@ class Parser {
         nodes.push(parseSfx());
       } else if (checkCharacterName()) {
         nodes.push(parseDialog());
+      } else if (aside()) {
+        nodes.push(parseAside());
       } else {
         nodes.push(parseParagraph());
         whitespace();
@@ -173,6 +175,19 @@ class Parser {
     var name = characterName();
     var content = dialogContent();
     return new Node(Dialog(name, content.modifiers, content.nodes), createPos(start));
+  }
+
+  function parseAside() {
+    var start = position;
+    var nodes = [ parseParagraph() ];
+    
+    while (!isAtEnd() && aside()) {
+      nodes.push(parseParagraph());
+    }
+
+    whitespace();
+
+    return new Node(Aside(nodes), createPos(start));
   }
 
   function dialogContent():{modifiers:Array<Node>, nodes:Array<Node>} {
@@ -211,7 +226,7 @@ class Parser {
     var nodes:Array<Node> = [];
 
     spacesOrTabs();
-    if (matchCont()) {
+    if (cont()) {
       requireNewline();
       spacesOrTabs();
     }
@@ -238,11 +253,11 @@ class Parser {
       if (newline()) {
         // Note: `whitespace()` will get newlines too, which we don't want
         spacesOrTabs();
-        if (!checkNewline() && !checkPageOrSectionBreak() && !checkCont()) {
+        if (!checkNewline() && !checkPageOrSectionBreak() && !checkCont() && !checkAside()) {
           // Join text nodes with a space.
           nodes.push(new Node(Text(Normal(' ')), createPos(position)));
           process();
-        } else if (!checkCont()) {
+        } else if (!checkCont() && !checkAside()) {
           position = prev;
         }
       }
@@ -323,7 +338,7 @@ class Parser {
     return check('(cont.)');
   }
 
-  function matchCont() {
+  function cont() {
     return match('(cont.)');
   }
 
@@ -333,6 +348,14 @@ class Parser {
 
   function pageBreak() {
     return match('---');
+  }
+
+  function aside() {
+    return match('>');
+  }
+
+  function checkAside() {
+    return check('>');
   }
 
   function caption() {

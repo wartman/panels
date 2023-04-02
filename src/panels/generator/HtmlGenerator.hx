@@ -104,6 +104,11 @@ class HtmlGenerator implements Generator {
       .dialog-header-modifiers:after {
         content: ")"
       }
+
+      .aside {
+        border-left: 3px solid #ccc;
+        padding-left: 20px;
+      }
     </style>
     <header class="comic-header page">
       <h1>$title</h1>
@@ -129,6 +134,10 @@ class HtmlGenerator implements Generator {
         }
       case Section(title) if (config.includeSections == true):
         '<header class="section-header"><h3>$title</h3></header>';
+      case Aside(nodes) if (nodes.length == 0):
+        '';
+      case Aside(nodes):
+        '<div class="aside">${nodes.map(generateNode).join('')}</div>';
       case Section(_):
         '';
       case Paragraph(nodes) if (nodes.length == 0):

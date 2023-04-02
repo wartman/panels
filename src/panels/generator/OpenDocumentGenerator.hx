@@ -44,6 +44,9 @@ class OpenDocumentGenerator implements Generator {
         generateDialog('SFX', modifiers, content, context);
       case Caption(modifiers, content):
         generateDialog('CAPTION', modifiers, content, context);
+      case Aside(nodes):
+        // @todo
+        p(...nodes.map(n -> generateNode(n, context)));
       case Paragraph(nodes):
         p(...nodes.map(n -> generateNode(n, context)));
     }
