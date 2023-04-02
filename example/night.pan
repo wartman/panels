@@ -12,8 +12,11 @@ Chapter 1
 
 We open on a dark and stormy night. This first panel here should be big -- really get that stormy atmosphere.
 
-> This is an aside!
 > Maybe like [this](some/url.png) or something?
+>
+> This line is a part of the same aside and is a new paragraph.
+> And this line is a part of the same paragraph.
+And this is a new paragraph outside the aside.
 
     CAPTION (Night)
     A dark and stormy night...

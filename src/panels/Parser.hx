@@ -179,13 +179,47 @@ class Parser {
 
   function parseAside() {
     var start = position;
-    var nodes = [ parseParagraph() ];
-    
-    while (!isAtEnd() && aside()) {
-      nodes.push(parseParagraph());
+    var nodes:Array<Node> = [];
+    var paragraph:Array<Node> = [];
+
+    // @todo: This paragraph stuff is super clunky. Can we unify
+    // it a bit more?
+
+    function addParagraph() {
+      var min = paragraph[0].pos.min;
+      var max = paragraph[paragraph.length - 1].pos.max;
+      nodes.push(new Node(Paragraph(paragraph), createPos(min, max)));
+      paragraph = [];
     }
 
-    whitespace();
+    function process() {
+      while (!isAtEnd() && !checkNewline()) {
+        paragraph.push(parseParagraphPart());
+      }
+
+      var prev = position;
+      if (newline()) {
+        spacesOrTabs();
+        if (aside() && !checkNewline()) {
+          nodes.push(new Node(Text(Normal(' ')), createPos(position)));
+          process();
+        } else if (newline()) {
+          spacesOrTabs();
+          if (aside()) {
+            addParagraph();
+            process();
+          } else {
+            position = prev;
+          }
+        } else {
+          position = prev;
+        }
+      }
+    }
+
+    process();
+
+    if (paragraph.length > 0) addParagraph();
 
     return new Node(Aside(nodes), createPos(start));
   }
@@ -233,21 +267,7 @@ class Parser {
 
     function process() {
       while (!isAtEnd() && !checkNewline()) {
-        if (check('\\')) {
-          nodes.push(parseText());
-        } else if (match('[')) {
-          nodes.push(parseLink());
-        } else if (match('**')) {
-          nodes.push(parseBold('**'));
-        } else if (match('__')) {
-          nodes.push(parseBold('__'));
-        } else if (match('*')) {
-          nodes.push(parseItalic('*'));
-        } else if (match('_')) {
-          nodes.push(parseItalic('_'));
-        } else {
-          nodes.push(parseText());
-        }
+        nodes.push(parseParagraphPart());
       }
       var prev = position;
       if (newline()) {
@@ -257,7 +277,7 @@ class Parser {
           // Join text nodes with a space.
           nodes.push(new Node(Text(Normal(' ')), createPos(position)));
           process();
-        } else if (!checkCont() && !checkAside()) {
+        } else if (!checkCont()) {
           position = prev;
         }
       }
@@ -266,6 +286,24 @@ class Parser {
     process();
 
     return new Node(Paragraph(nodes), createPos(start));
+  }
+
+  function parseParagraphPart() {
+    if (check('\\')) {
+      return parseText();
+    } else if (match('[')) {
+      return parseLink();
+    } else if (match('**')) {
+      return parseBold('**');
+    } else if (match('__')) {
+      return parseBold('__');
+    } else if (match('*')) {
+      return parseItalic('*');
+    } else if (match('_')) {
+      return parseItalic('_');
+    } else {
+      return parseText();
+    }
   }
 
   function parseLink() {
