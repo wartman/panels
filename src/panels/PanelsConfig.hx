@@ -15,6 +15,7 @@ typedef PanelsConfigImpl = {
 }
 
 typedef CompilerConfig = {
+  public final ?startPage:Int;
   public final ?includeSections:Bool;
   public final ?includeFrontmatter:Bool;
   // @todo: Add more

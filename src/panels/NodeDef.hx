@@ -42,6 +42,7 @@ enum NodeDef {
   Paragraph(nodes:Array<Node>);
   Aside(nodes:Array<Node>);
   Page(nodes:Array<Node>);
+  TwoPage(nodes:Array<Node>);
   Panel(type:PanelType, nodes:Array<Node>);
   Dialog(name:String, modifiers:Array<Node>, content:Array<Node>);
   Sfx(modifiers:Array<Node>, content:Array<Node>);

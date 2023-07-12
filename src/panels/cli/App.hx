@@ -97,9 +97,9 @@ class App implements Command {
 
     return getSource(file).next(source -> {
       var generator = switch format {
-        case 'odt': new OpenDocumentGenerator();
+        case 'odt': new OpenDocumentGenerator({});
         case 'html': new HtmlGenerator({includeSections: includeSections});
-        default: return new Error(NotFound, 'Invalid format: $format');
+        default: return Promise.reject(new Error(NotFound, 'Invalid format: $format'));
       }
       var compiler = createCompiler(source, generator);
       return compiler.compile();
@@ -107,7 +107,7 @@ class App implements Command {
       var writer:Writer = switch format {
         case 'html': new HtmlWriter();
         case 'odt': new OpenDocumentWriter();
-        default: return new Error(InternalError, 'Invalid format: $format');
+        default: return Promise.reject(new Error(InternalError, 'Invalid format: $format'));
       }
       return writer.write(dest, content);
     }).next(_ -> {
@@ -164,9 +164,11 @@ class App implements Command {
     return 0;
   }
 
-  function getDefaulConfig():PanelsConfig {
+  function getDefaultConfig():PanelsConfig {
     return {
-      compiler: {},
+      compiler: {
+        startPage: 1
+      },
       validator: {
         requireAuthor: requireAuthor,
         maxPanelsPerPage: maxPanelsPerPage,
@@ -178,14 +180,14 @@ class App implements Command {
   function createCompiler(source:Source, generator) {
     var config:PanelsConfig = if (ignoreDotPanels) {
       output.writeLn('', '    Ignoring .panels config -- using defaults and CLI flags'.color(Yellow));
-      getDefaulConfig();
+      getDefaultConfig();
     } else switch DotPanels.find(source.file) {
       case Some(config):
         output.writeLn('', '    Using .panels config'.color(Yellow));
         config;
       case None:
         output.writeLn('', '    No .panels config found -- using defaults and CLI flags'.color(Red));
-        getDefaulConfig();
+        getDefaultConfig();
     }
 
     // @todo: We need to be able to override the .panels config

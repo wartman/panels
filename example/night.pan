@@ -37,7 +37,7 @@ Fred turns to his friend. He looks around nervously.
 
 There is a long and awkward silence.
 
----
+---|---
 
 [1]
 

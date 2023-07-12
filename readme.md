@@ -167,6 +167,21 @@ Chapter 1
 ---
 ```
 
+One additional break is the *two-page spread*. It looks like this:
+
+
+```
+---|---
+
+[1]
+
+This is a two page spread!
+```
+
+This works anywhere a normal page break would, however Panels will -- by default -- check to make sure that a two-page spread will actually work in the location given. This just means checking that the left-hand page is *even-numbered*.
+
+> Note: This may change in the future.
+
 ### Panels
 
 Every page in Panels must have at least one panel. It's in the name, after all.

@@ -3,6 +3,7 @@ package panels;
 import panels.Validator;
 import panels.CompilerMetadata;
 
+using Lambda;
 using tink.CoreApi;
 
 class Compiler {
@@ -41,6 +42,8 @@ class Compiler {
             pageCount = 0;
           case Page(_):
             pageCount++;
+          case TwoPage(_):
+            pageCount += 2;
           default:
         }
 
@@ -51,17 +54,18 @@ class Compiler {
           });
         }
 
-        ({
+        Promise.resolve(({
           title: frontmatter.get('title', null),
           author: frontmatter.get('author', null),
-          pages: nodes.filter(n -> switch n.node {
-            case Page(_): true;
-            default: false;
-          }).length,
+          pages: nodes.map(node -> switch node.node {
+            case Page(_): 1;
+            case TwoPage(_): 2;
+            default: 0;
+          }).fold((item, count) -> item + count, 0),
           sections: sections
-        } : CompilerMetadata);
+        } : CompilerMetadata));
       default:
-        new Error(InternalError, 'Something went wrong');
+        Promise.reject(new Error(InternalError, 'Something went wrong'));
     });
   }
 

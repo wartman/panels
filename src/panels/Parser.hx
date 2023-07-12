@@ -24,6 +24,7 @@ class Parser {
 
   function parseTopLevel():Node {
     if (sectionBreak()) return parseSection();
+    if (twoPageBreak()) return parsePage(true);
     if (pageBreak()) return parsePage();
 
     throw new ParserException('Expected a page break, a section break or the end of the file', null, createPos(position));
@@ -96,7 +97,7 @@ class Parser {
     return new Node(Section(title), createPos(start));
   }
 
-  function parsePage() {
+  function parsePage(isTwoPager:Bool = false) {
     var start = position;
     var nodes:Array<Node> = [];
 
@@ -111,7 +112,7 @@ class Parser {
     }
 
     whitespace();
-    return new Node(Page(nodes), createPos(start));
+    return new Node(isTwoPager ? TwoPage(nodes) : Page(nodes), createPos(start));
   }
 
   function parsePanel() {
@@ -369,7 +370,7 @@ class Parser {
   }
 
   function checkPageOrSectionBreak() {
-    return checkAny('---', '===');
+    return checkAny('---|---', '---', '===');
   }
 
   function checkCont() {
@@ -382,6 +383,10 @@ class Parser {
 
   function sectionBreak() {
     return match('===');
+  }
+
+  function twoPageBreak() {
+    return match('---|---');
   }
 
   function pageBreak() {

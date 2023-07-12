@@ -2,9 +2,10 @@ package panels.generator;
 
 import Xml;
 import panels.NodeDef;
+import panels.PanelsConfig;
 
-using tink.CoreApi;
 using panels.generator.XmlTools;
+using tink.CoreApi;
 
 typedef OpenDocumentGeneratorContext = {
   public var currentPage:Int;
@@ -14,13 +15,17 @@ typedef OpenDocumentGeneratorContext = {
 // @note: This is a bit of a mess -- I just want something that mostly works.
 // @see: https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#__RefHeading__440346_826425813
 class OpenDocumentGenerator implements Generator {
-  public function new() {}
+  final config:CompilerConfig;
+
+  public function new(config) {
+    this.config = config;
+  }
 
   public function generate(node:Node):Promise<String> {
     var doc = Xml.createDocument();
     doc.addChild(Xml.parse('<?xml version="1.0" encoding="UTF-8"?>'));
     doc.addChild(generateNode(node, {
-      currentPage: 0,
+      currentPage: (config.startPage ?? 1) - 1,
       currentPanel: 0
     }));
     return doc.toString();
@@ -34,6 +39,8 @@ class OpenDocumentGenerator implements Generator {
         p();
       case Page(nodes):
         generatePage(nodes, context);
+      case TwoPage(nodes):
+        generatePage(nodes, context, true);
       case Text(content):
         generateText(content);
       case Panel(type, nodes):
@@ -268,13 +275,18 @@ class OpenDocumentGenerator implements Generator {
     }
   }
 
-  function generatePage(nodes:Array<Node>, context:OpenDocumentGeneratorContext) {
+  function generatePage(nodes:Array<Node>, context:OpenDocumentGeneratorContext, isTwoPager = false) {
     context.currentPage++;
     context.currentPanel = 0;
 
     var body = Xml.createDocument();
     var children = nodes.map(n -> generateNode(n, context));
-    var title = p(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
+    var title = switch isTwoPager {
+      case true:
+        p(Xml.createPCData('Pages ${context.currentPage} to ${context.currentPage++} - ${context.currentPanel} panels'));
+      case false:
+        p(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
+    } 
     title.set('text:style-name', 'PTITLE');
 
     body.append(title);

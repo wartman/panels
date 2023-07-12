@@ -19,6 +19,8 @@ class HtmlGenerator implements Generator {
   }
 
   public function generate(node:Node):Promise<String> {
+    pageNumber = config.startPage ?? 1;
+
     // @todo: fill in the <head> when we have frontmatter.
     var frontmatter:Frontmatter = switch node.node {
       case Document(frontmatter, _): frontmatter;
@@ -144,13 +146,20 @@ class HtmlGenerator implements Generator {
         '';
       case Paragraph(nodes):
         '<p>' + nodes.map(generateNode).join('') + '</p>';
-      case Page(nodes):
+      case Page(nodes) | TwoPage(nodes):
         panelNumber = 1;
         panelCount = 0;
+        
+        var pageDisplay = switch node.node {
+          case TwoPage(_):
+            'Pages ${pageNumber++} to ${pageNumber++} (Spread)';
+          default:
+            'Page ${pageNumber++}';
+        }
         var body = nodes.map(generateNode).join('');
 
         '<section class="page">'
-        + '<header class="page-header">Page ${pageNumber++} - $panelCount Panels</header>'
+        + '<header class="page-header">${pageDisplay} - $panelCount Panels</header>'
         + body
         + '</section>';
       case Panel(type, nodes):
