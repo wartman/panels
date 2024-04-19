@@ -1,7 +1,7 @@
 -cp src
 
--lib tink_core
--lib cmdr
+-lib kit
+-lib kit.cli
 -lib hxnodejs
 
 -main Panels

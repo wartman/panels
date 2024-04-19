@@ -229,7 +229,7 @@ class Parser {
     spacesOrTabs();
     var modifiers = modifierList();
     spacesOrTabs();
-    requireNewline('A newline (`enter`) is required after a character name (plus modifers).');
+    requireNewline('A newline (`enter`) is required after a character name (plus modifiers).');
 
     var nodes = dialogBody();
 
@@ -274,6 +274,9 @@ class Parser {
       if (newline()) {
         // Note: `whitespace()` will get newlines too, which we don't want
         spacesOrTabs();
+        // If we have more text after one newline, that means that the
+        // next line of text is part of the same paragraph. We'll convert
+        // that newline to a space and keep parsing.
         if (!checkNewline() && !checkPageOrSectionBreak() && !checkCont() && !checkAside()) {
           // Join text nodes with a space.
           nodes.push(new Node(Text(Normal(' ')), createPos(position)));
@@ -291,6 +294,7 @@ class Parser {
 
   function parseParagraphPart() {
     if (check('\\')) {
+      // @todo: We should only allow this to escape *some* characters.
       return parseText();
     } else if (match('[')) {
       return parseLink();

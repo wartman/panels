@@ -5,7 +5,6 @@ import panels.NodeDef;
 import panels.PanelsConfig;
 
 using panels.generator.XmlTools;
-using tink.CoreApi;
 
 typedef OpenDocumentGeneratorContext = {
   public var currentPage:Int;
@@ -21,7 +20,7 @@ class OpenDocumentGenerator implements Generator {
     this.config = config;
   }
 
-  public function generate(node:Node):Promise<String> {
+  public function generate(node:Node):Task<String> {
     var doc = Xml.createDocument();
     doc.addChild(Xml.parse('<?xml version="1.0" encoding="UTF-8"?>'));
     doc.addChild(generateNode(node, {

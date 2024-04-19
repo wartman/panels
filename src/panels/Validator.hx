@@ -28,7 +28,7 @@ class Validator {
         var startPos:Position = {min: 0, max: 1, file: node.pos.file};
         var details = 'Make sure you have included all required properties'
           + ' in your document before the first line break (`---`). You can'
-          + ' supress this warning by setting `config.requireTitle` or `config.requireAuthor`'
+          + ' suppress this warning by setting `config.requireTitle` or `config.requireAuthor`'
           + ' to false or by removing this property from `config.requireProperties`.';
 
         if (config.requireTitle == true && frontmatter.get('title', null) == null) {

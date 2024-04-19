@@ -1,14 +1,13 @@
 package panels.cli;
 
-import cmdr.*;
+import kit.cli.*;
 import panels.writer.*;
 import panels.generator.*;
 
 using sys.FileSystem;
 using sys.io.File;
 using haxe.io.Path;
-using tink.CoreApi;
-using cmdr.StyleTools;
+using kit.cli.StyleTools;
 
 /**
   Tools for compiling and investigating Panels scripts.
@@ -61,8 +60,7 @@ class App implements Command {
   public var maxPanelsPerPage:Int = null;
 
   /**
-    Makes sure that panel numbers are in order from lowest
-    to highest.
+    Makes sure that panel numbers are in order from lowest to highest.
   **/
   @:alias('o')
   @:flag
@@ -83,10 +81,10 @@ class App implements Command {
     Panels will attempt to load that configuration. Note that you can override
     .panels config with cli flags, or by using --ignoreDotPanels -i.
 
-    (IMPORTANT NOTE: .panels won't be overridden yet actually :v)
+    (IMPORTANT NOTE: .panels won't actually be overridden yet :v)
   **/
   @:command
-  public function compile(src:String):Result {
+  public function compile(src:String):Task<Int> {
     var file = Path.join([Sys.getCwd(), src]);
     var dest = destination != null ? destination : Path.join([Sys.getCwd(), src.withoutExtension()]);
 
@@ -99,7 +97,7 @@ class App implements Command {
       var generator = switch format {
         case 'odt': new OpenDocumentGenerator({});
         case 'html': new HtmlGenerator({includeSections: includeSections});
-        default: return Promise.reject(new Error(NotFound, 'Invalid format: $format'));
+        default: return Task.reject(new Error(NotFound, 'Invalid format: $format'));
       }
       var compiler = createCompiler(source, generator);
       return compiler.compile();
@@ -107,7 +105,7 @@ class App implements Command {
       var writer:Writer = switch format {
         case 'html': new HtmlWriter();
         case 'odt': new OpenDocumentWriter();
-        default: return Promise.reject(new Error(InternalError, 'Invalid format: $format'));
+        default: return Task.reject(new Error(InternalError, 'Invalid format: $format'));
       }
       return writer.write(dest, content);
     }).next(_ -> {
@@ -118,7 +116,7 @@ class App implements Command {
         .write(file.bold())
         .write(' to ')
         .writeLn(dest.withExtension(format).bold());
-      return Noise;
+      return 0;
     });
   }
 
@@ -127,7 +125,7 @@ class App implements Command {
     without creating any output.
   **/
   @:command
-  public function info(src:String):Result {
+  public function info(src:String):Task<Int> {
     var file = Path.join([Sys.getCwd(), src]);
 
     return getSource(file).next(source -> {
@@ -151,7 +149,7 @@ class App implements Command {
         writeInfo('  ' + section.title, section.pages + ' pages');
       }
 
-      return Noise;
+      return 0;
     });
   }
 
@@ -159,7 +157,7 @@ class App implements Command {
     Tools to compile a Panels script.
   **/
   @:defaultCommand
-  public function documentation():Result {
+  public function documentation():Task<Int> {
     output.writeLn(getDocs());
     return 0;
   }
@@ -191,10 +189,10 @@ class App implements Command {
     }
 
     // @todo: We need to be able to override the .panels config
-    return new Compiler(source, new VisualReporter(), generator, config);
+    return new Compiler(source, new VisualReporter(str -> output.writeLn(str)), generator, config);
   }
 
-  function getSource(file:String):Promise<Source> {
+  function getSource(file:String):Task<Source> {
     if (file.extension() == '') file = file.withExtension('pan');
     if (!file.exists()) return new Error(NotFound, 'No file found with that name.');
 
