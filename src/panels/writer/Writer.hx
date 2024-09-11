@@ -4,7 +4,6 @@ using sys.io.File;
 using sys.FileSystem;
 using haxe.io.Path;
 
-// @todo: This "writer" class is overkill probably
 abstract class Writer {
   abstract public function write(path:String, content:String):Task<Nothing>;
 

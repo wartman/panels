@@ -1,0 +1,13 @@
+-cp src
+-cp tools/vscode/src
+
+-lib vscode
+
+-D js-es=6
+-D analyzer-optimize
+
+-dce full
+
+panels.Extension
+
+-js tools/vscode/bin/extension.js

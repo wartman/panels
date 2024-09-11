@@ -1,0 +1,113 @@
+{
+  "name": "panels",
+  "fileTypes": [
+    "pan",
+    "panels"
+  ],
+  "scopeName": "source.pan",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#sections"
+    },
+    {
+      "include": "#pages"
+    },
+    {
+      "include": "#panels"
+    },
+    {
+      "include": "#dialog"
+    },
+    {
+      "include": "#markup"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.block.pan",
+      "begin": "/\\*",
+      "end": "\\*/"
+    },
+    "sections": {
+      "name": "meta.separator.section.pan",
+      "begin": "^[ \\t]*(===)",
+      "end": "^[ \\t]*(---|===)",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.section.pan"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "storage.type.page.pan"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "match": ".",
+          "name": "entity.other.attribute-name.section.pan"
+        }
+      ]
+    },
+    "pages": {
+      "name": "meta.separator.page.pan",
+      "match": "^[ \\t]*(---)",
+      "captures": {
+        "1": {
+          "name": "storage.type.page.pan"
+        }
+      }
+    },
+    "panels": {
+      "name": "meta.separator.panel.pan",
+      "match": "(\\[)\\s*([0-9]*)?\\s*(\\])",
+      "captures": {
+        "1": {
+          "name": "storage.type.panel.pan"
+        },
+        "2": {
+          "name": "entity.other.attribute-name.panel.pan"
+        },
+        "3": {
+          "name": "storage.type.panel.pan"
+        }
+      }
+    },
+    "dialog": {
+      "contentName": "string",
+      "begin": "^[ \\t]*(((?!@)[^\\p{Ll}\\r\\n]*?\\p{Lu}[^\\p{Ll}\\r\\n]*?)|((@)[^\\r\\n]*?))(\\(.*\\))?(\\s*\\^)?$",
+      "end": "^$",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.other.attribute-name.pan"
+        },
+        "5": {
+          "name": "constant.character.escape.pan"
+        },
+        "6": {
+          "name": "variable.other"
+        },
+        "7": {
+          "name": "constant.character.escape.pan"
+        }
+      },
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "name": "constant.character.escape.pan",
+          "match": "^[ \\t]*\\(.*\\)$"
+        }
+      ]
+    },
+    "markup": null
+  }
+}
