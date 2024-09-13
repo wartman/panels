@@ -2,7 +2,7 @@
 	"name": "@wartman/panels",
 	"main": "bin/panels.js",
 	"author": "wartman",
-	"version": "0.0.1-alpha1",
+	"version": "0.0.2",
 	"description": "A simple markup language for comic scripts",
 	"homepage": "https://github.com/wartman/panels",
 	"license": "MIT",

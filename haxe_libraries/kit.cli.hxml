@@ -1,5 +1,0 @@
-# @install: lix --silent download "gh://github.com/wartman/kit.cli#f7a7137f81a1fd5fb64a91dc30a865e9419bd124" into kit.cli/0.0.1/github/f7a7137f81a1fd5fb64a91dc30a865e9419bd124
--lib kit
--cp ${HAXE_LIBCACHE}/kit.cli/0.0.1/github/f7a7137f81a1fd5fb64a91dc30a865e9419bd124/src
--D kit.cli=0.0.1
--D use-rtti-doc
