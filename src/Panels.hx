@@ -1,4 +1,4 @@
-import cmdr.Cli;
+import kit.Cli;
 import panels.cli.*;
 
 function main() {

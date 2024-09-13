@@ -4,7 +4,6 @@ import panels.Validator;
 import panels.CompilerMetadata;
 
 using Lambda;
-using tink.CoreApi;
 
 class Compiler {
   final source:Source;
@@ -19,11 +18,11 @@ class Compiler {
     this.config = config;
   }
 
-  public function compile():Promise<String> {
+  public function compile():Task<String> {
     return compileToAst().next(generator.generate);
   }
 
-  public function getMetadata():Promise<CompilerMetadata> {
+  public function getMetadata():Task<CompilerMetadata> {
     return compileToAst().next(node -> switch node.node {
       case Document(frontmatter, nodes):
         var currentSection:String = '(No section)';
@@ -54,7 +53,7 @@ class Compiler {
           });
         }
 
-        Promise.resolve(({
+        Task.resolve(({
           title: frontmatter.get('title', null),
           author: frontmatter.get('author', null),
           pages: nodes.map(node -> switch node.node {
@@ -65,11 +64,11 @@ class Compiler {
           sections: sections
         } : CompilerMetadata));
       default:
-        Promise.reject(new Error(InternalError, 'Something went wrong'));
+        Task.reject(new Error(InternalError, 'Something went wrong'));
     });
   }
 
-  function compileToAst():Promise<Node> {
+  function compileToAst():Task<Node> {
     try {
       var parser = new Parser(source);
       var node = parser.parse();
@@ -78,6 +77,7 @@ class Compiler {
 
       if (errors.length > 0) {
         for (e in errors) reporter.report(e, source);
+        // @todo: Allow compilation to continue if we only have Warnings?
         return new Error(InternalError, 'Failed to compile');
       }
 

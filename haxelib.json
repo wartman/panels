@@ -1,0 +1,16 @@
+{
+  "name": "panels",
+  "url": "https://github.com/wartman/panels",
+  "releasenote": "Use Kit",
+  "version": "0.0.2",
+  "classPath": "src",
+  "contributors": [
+    "wartman"
+  ],
+  "dependencies": {
+    "kit": "0.2.1",
+    "hxnodejs": "12.2.0"
+  },
+  "description": "A simple language for comic scripts",
+  "license": "MIT"
+}

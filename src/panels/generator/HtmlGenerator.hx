@@ -3,8 +3,6 @@ package panels.generator;
 import panels.NodeDef;
 import panels.PanelsConfig;
 
-using tink.CoreApi;
-
 // @todo: This needs a lot of cleanup. Probably should use XML in here too.
 class HtmlGenerator implements Generator {
   final config:CompilerConfig;
@@ -18,7 +16,7 @@ class HtmlGenerator implements Generator {
     this.config = config;
   }
 
-  public function generate(node:Node):Promise<String> {
+  public function generate(node:Node):Task<String> {
     pageNumber = config.startPage ?? 1;
 
     // @todo: fill in the <head> when we have frontmatter.
