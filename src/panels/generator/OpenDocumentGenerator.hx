@@ -1,69 +1,82 @@
 package panels.generator;
 
 import Xml;
+import kit.io.FileSystem;
+import kit.io.IoError;
 import panels.NodeDef;
 import panels.PanelsConfig;
 
+using haxe.io.Path;
 using panels.generator.XmlTools;
 
 typedef OpenDocumentGeneratorContext = {
-  public var currentPage:Int;
-  public var currentPanel:Int;
+	public var currentPage:Int;
+	public var currentPanel:Int;
 }
 
 // @note: This is a bit of a mess -- I just want something that mostly works.
 // @see: https://docs.oasis-open.org/office/v1.2/os/OpenDocument-v1.2-os-part1.html#__RefHeading__440346_826425813
 class OpenDocumentGenerator implements Generator {
-  final config:CompilerConfig;
+	final config:CompilerConfig;
 
-  public function new(config) {
-    this.config = config;
-  }
+	public function new(config) {
+		this.config = config;
+	}
 
-  public function generate(node:Node):Task<String> {
-    var doc = Xml.createDocument();
-    doc.addChild(Xml.parse('<?xml version="1.0" encoding="UTF-8"?>'));
-    doc.addChild(generateNode(node, {
-      currentPage: (config.startPage ?? 1) - 1,
-      currentPanel: 0
-    }));
-    return doc.toString();
-  }
+	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError> {
+		return generate(node)
+			.mapError(e -> Other(e))
+			.then(contents -> fs.detect(path.directory())
+				.then(entry -> entry.ensureDirectory())
+				.then(dir -> dir.file(path.withoutDirectory().withExtension('fodt')).write(contents))
+			)
+			.then(_ -> Task.nothing());
+	}
 
-  function generateNode(node:Node, context:OpenDocumentGeneratorContext):Xml {
-    return switch node.node {
-      case Document(frontmatter, nodes):
-        generateDocument(frontmatter, nodes, context);
-      case Section(_):
-        p();
-      case Page(nodes):
-        generatePage(nodes, context);
-      case TwoPage(nodes):
-        generatePage(nodes, context, true);
-      case Text(content):
-        generateText(content);
-      case Panel(type, nodes):
-        generatePanel(type, nodes, context);
-      case Dialog(name, modifiers, content):
-        generateDialog(name, modifiers, content, context);
-      case Sfx(modifiers, content):
-        generateDialog('SFX', modifiers, content, context);
-      case Caption(modifiers, content):
-        generateDialog('CAPTION', modifiers, content, context);
-      case Aside(nodes):
-        // @todo
-        p(...nodes.map(n -> generateNode(n, context)));
-      case Paragraph(nodes):
-        p(...nodes.map(n -> generateNode(n, context)));
-    }
-  }
+	public function generate(node:Node):Task<String> {
+		var doc = Xml.createDocument();
+		doc.addChild(Xml.parse('<?xml version="1.0" encoding="UTF-8"?>'));
+		doc.addChild(generateNode(node, {
+			currentPage: (config.startPage ?? 1) - 1,
+			currentPanel: 0
+		}));
+		return doc.toString();
+	}
 
-  function generateDocument(frontmatter:Frontmatter, nodes:Array<Node>, context):Xml {
-    // var doc = Xml.createElement('office:document');
-    // doc.set('xmlns:office', 'urn:oasis:names:tc:opendocument:xmlns:office:1.0');
-    // doc.set('office:mimetype', 'application/vnd.oasis.opendocument.text');
-    // doc.set('office:version', '1.3');
-    var doc = Xml.parse('<office:document
+	function generateNode(node:Node, context:OpenDocumentGeneratorContext):Xml {
+		return switch node.node {
+			case Document(frontmatter, nodes):
+				generateDocument(frontmatter, nodes, context);
+			case Section(_):
+				p();
+			case Page(nodes):
+				generatePage(nodes, context);
+			case TwoPage(nodes):
+				generatePage(nodes, context, true);
+			case Text(content):
+				generateText(content);
+			case Panel(type, nodes):
+				generatePanel(type, nodes, context);
+			case Dialog(name, modifiers, content):
+				generateDialog(name, modifiers, content, context);
+			case Sfx(modifiers, content):
+				generateDialog('SFX', modifiers, content, context);
+			case Caption(modifiers, content):
+				generateDialog('CAPTION', modifiers, content, context);
+			case Aside(nodes):
+				// @todo
+				p(...nodes.map(n -> generateNode(n, context)));
+			case Paragraph(nodes):
+				p(...nodes.map(n -> generateNode(n, context)));
+		}
+	}
+
+	function generateDocument(frontmatter:Frontmatter, nodes:Array<Node>, context):Xml {
+		// var doc = Xml.createElement('office:document');
+		// doc.set('xmlns:office', 'urn:oasis:names:tc:opendocument:xmlns:office:1.0');
+		// doc.set('office:mimetype', 'application/vnd.oasis.opendocument.text');
+		// doc.set('office:version', '1.3');
+		var doc = Xml.parse('<office:document
       xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
       xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
       xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" 
@@ -103,8 +116,8 @@ class OpenDocumentGenerator implements Generator {
       office:version="1.3"
       office:mimetype="application/vnd.oasis.opendocument.text"
     />')
-      .firstChild();
-    doc.append(Xml.parse('
+			.firstChild();
+		doc.append(Xml.parse('
  <office:automatic-styles>
   <style:style style:name="P1" style:family="paragraph" style:parent-style-name="Standard">
    <style:text-properties officeooo:rsid="000993cf" officeooo:paragraph-rsid="000993cf"/>
@@ -181,7 +194,7 @@ class OpenDocumentGenerator implements Generator {
    <style:footer-style/>
   </style:page-layout>
  </office:automatic-styles>'));
-    doc.append(Xml.parse('<office:styles>
+		doc.append(Xml.parse('<office:styles>
   <style:default-style style:family="graphic">
    <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="0.1181in" draw:shadow-offset-y="0.1181in" draw:start-line-spacing-horizontal="0.1114in" draw:start-line-spacing-vertical="0.1114in" draw:end-line-spacing-horizontal="0.1114in" draw:end-line-spacing-vertical="0.1114in" style:flow-with-text="false"/>
    <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:font-independent-line-spacing="false">
@@ -225,138 +238,140 @@ class OpenDocumentGenerator implements Generator {
       </style:style>
     </office:styles>'));
 
-    doc.append(Xml.parse('<office:font-face-decls>
+		doc.append(Xml.parse('<office:font-face-decls>
       <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss" style:font-pitch="variable"/>
     </office:font-face-decls>'));
-    doc.append(Xml.parse('<office:master-styles>
+		doc.append(Xml.parse('<office:master-styles>
       <style:master-page style:name="Standard" style:page-layout-name="pm1"/>
     </office:master-styles>'));
-    doc.append(Xml.createElement('office:meta'));
-    doc.append(Xml.createElement('office:scripts'));
-    doc.append(Xml.createElement('office:settings'));
+		doc.append(Xml.createElement('office:meta'));
+		doc.append(Xml.createElement('office:scripts'));
+		doc.append(Xml.createElement('office:settings'));
 
-    var body = Xml.createElement('office:body');
-    doc.append(body);
+		var body = Xml.createElement('office:body');
+		doc.append(body);
 
-    var textBody = Xml.createElement('office:text');
-    textBody.set('text:use-soft-page-breaks', 'true');
-    textBody.append(Xml.parse('<text:sequence-decls>
+		var textBody = Xml.createElement('office:text');
+		textBody.set('text:use-soft-page-breaks', 'true');
+		textBody.append(Xml.parse('<text:sequence-decls>
       <text:sequence-decl text:display-outline-level="0" text:name="Illustration"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Table"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Text"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Drawing"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Figure"/>
     </text:sequence-decls>'));
-    for (node in nodes) textBody.append(generateNode(node, context));
-    body.append(textBody);
+		for (node in nodes) textBody.append(generateNode(node, context));
+		body.append(textBody);
 
-    return doc;
-  }
+		return doc;
+	}
 
-  function generateParagraph(nodes:Array<Node>, context) {
-    return p(...nodes.map(n -> generateNode(n, context)));
-  }
+	function generateParagraph(nodes:Array<Node>, context) {
+		return p(...nodes.map(n -> generateNode(n, context)));
+	}
 
-  function generateText(content:TextType):Xml {
-    return switch content {
-      case Normal(value):
-        Xml.createPCData(value);
-      case Bold(value):
-        var b = span(Xml.createPCData(value));
-        b.set('text:style-name', 'PB');
-        b;
-      case Italic(value):
-        var i = span(Xml.createPCData(value));
-        i.set('text:style-name', 'PI');
-        i;
-      case Link(label, url):
-        Xml.createPCData('(link not implemented yet)');
-    }
-  }
+	function generateText(content:TextType):Xml {
+		return switch content {
+			case Normal(value):
+				Xml.createPCData(value);
+			case Bold(value):
+				var b = span(Xml.createPCData(value));
+				b.set('text:style-name', 'PB');
+				b;
+			case Italic(value):
+				var i = span(Xml.createPCData(value));
+				i.set('text:style-name', 'PI');
+				i;
+			case Link(label, url):
+				Xml.createPCData('(link not implemented yet)');
+		}
+	}
 
-  function generatePage(nodes:Array<Node>, context:OpenDocumentGeneratorContext, isTwoPager = false) {
-    context.currentPage++;
-    context.currentPanel = 0;
+	function generatePage(nodes:Array<Node>, context:OpenDocumentGeneratorContext, isTwoPager = false) {
+		context.currentPage++;
+		context.currentPanel = 0;
 
-    var body = Xml.createDocument();
-    var children = nodes.map(n -> generateNode(n, context));
-    var title = switch isTwoPager {
-      case true:
-        p(Xml.createPCData('Pages ${context.currentPage} to ${context.currentPage++} - ${context.currentPanel} panels'));
-      case false:
-        p(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
-    } 
-    title.set('text:style-name', 'PTITLE');
+		var body = Xml.createDocument();
+		var children = nodes.map(n -> generateNode(n, context));
+		var title = switch isTwoPager {
+			case true:
+				var title = p(Xml.createPCData('Pages ${context.currentPage} to ${context.currentPage + 1} (Spread) - ${context.currentPanel} panels'));
+				context.currentPage += 1;
+				title;
+			case false:
+				p(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
+		}
+		title.set('text:style-name', 'PTITLE');
 
-    body.append(title);
-    for (child in children) body.append(child);
+		body.append(title);
+		for (child in children) body.append(child);
 
-    var pageBreak = p(Xml.createElement('text:line-break'));
-    pageBreak.set('text:style-name', "PPAGEBREAK");
-    body.append(pageBreak);
+		var pageBreak = p(Xml.createElement('text:line-break'));
+		pageBreak.set('text:style-name', "PPAGEBREAK");
+		body.append(pageBreak);
 
-    return body;
-  }
+		return body;
+	}
 
-  function generatePanel(type:PanelType, nodes:Array<Node>, context:OpenDocumentGeneratorContext) {
-    context.currentPanel++;
+	function generatePanel(type:PanelType, nodes:Array<Node>, context:OpenDocumentGeneratorContext) {
+		context.currentPanel++;
 
-    var children = nodes.copy();
-    var first = children.shift();
-    var panel = Xml.createDocument();
-    var number = Std.string(switch type {
-      case Auto: context.currentPanel;
-      case UserDefined(number): number;
-    });
-    var panelStart = span(Xml.createPCData('PANEL ${number}:'));
-    panelStart.set('text:style-name', 'PB');
+		var children = nodes.copy();
+		var first = children.shift();
+		var panel = Xml.createDocument();
+		var number = Std.string(switch type {
+			case Auto: context.currentPanel;
+			case UserDefined(number): number;
+		});
+		var panelStart = span(Xml.createPCData('PANEL ${number}:'));
+		panelStart.set('text:style-name', 'PB');
 
-    if (first != null) switch first.node {
-      case Paragraph(nodes):
-        var content = nodes.map(n -> generateNode(n, context));
-        content.unshift(panelStart);
-        content.unshift(Xml.createPCData(' '));
-        panel.append(p(...content));
-      default:
-        panel.append(panelStart);
-        panel.append(generateNode(first, context));
-    }
-    else {
-      panel.append(panelStart);
-    }
+		if (first != null) switch first.node {
+			case Paragraph(nodes):
+				var content = nodes.map(n -> generateNode(n, context));
+				content.unshift(panelStart);
+				content.unshift(Xml.createPCData(' '));
+				panel.append(p(...content));
+			default:
+				panel.append(panelStart);
+				panel.append(generateNode(first, context));
+		}
+		else {
+			panel.append(panelStart);
+		}
 
-    for (child in children) panel.append(generateNode(child, context));
+		for (child in children) panel.append(generateNode(child, context));
 
-    return panel;
-  }
+		return panel;
+	}
 
-  function generateDialog(name:String, modifiers:Array<Node>, content:Array<Node>, context:OpenDocumentGeneratorContext) {
-    var dialog = Xml.createDocument();
-    var title = p(Xml.createPCData(name));
-    // @todo: modifiers -- they should be children of title.
-    title.set('text:style-name', 'PDIALOG');
-    dialog.append(title);
+	function generateDialog(name:String, modifiers:Array<Node>, content:Array<Node>, context:OpenDocumentGeneratorContext) {
+		var dialog = Xml.createDocument();
+		var title = p(Xml.createPCData(name));
+		// @todo: modifiers -- they should be children of title.
+		title.set('text:style-name', 'PDIALOG');
+		dialog.append(title);
 
-    var children = content.map(n -> generateNode(n, context)).map(el -> {
-      el.set('text:style-name', 'PDIALOG');
-      el;
-    });
+		var children = content.map(n -> generateNode(n, context)).map(el -> {
+			el.set('text:style-name', 'PDIALOG');
+			el;
+		});
 
-    for (el in children) dialog.append(el);
+		for (el in children) dialog.append(el);
 
-    return dialog;
-  }
+		return dialog;
+	}
 
-  function span(...content:Xml) {
-    var node = Xml.createElement('text:span');
-    for (item in content) node.append(item);
-    return node;
-  }
+	function span(...content:Xml) {
+		var node = Xml.createElement('text:span');
+		for (item in content) node.append(item);
+		return node;
+	}
 
-  function p(...content:Xml) {
-    var node = Xml.createElement('text:p');
-    node.set('text:style-name', 'PBASE');
-    for (item in content) node.append(item);
-    return node;
-  }
+	function p(...content:Xml) {
+		var node = Xml.createElement('text:p');
+		node.set('text:style-name', 'PBASE');
+		for (item in content) node.append(item);
+		return node;
+	}
 }

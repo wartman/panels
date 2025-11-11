@@ -1,10 +1,14 @@
 -cp src
 
 -lib kit
--lib kit.cli
+-lib director
 -lib hxnodejs
 
 -main Panels
+
+-dce full
+-D analyzer-optimize
+-D js-es=6
 
 -js bin/panels.js
 

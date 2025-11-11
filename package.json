@@ -19,5 +19,8 @@
 	"scripts": {
 		"prepare": "npx haxe build.hxml",
 		"postinstall": "npx lix download"
+	},
+	"dependencies": {
+		"pdfkit": "^0.17.2"
 	}
 }

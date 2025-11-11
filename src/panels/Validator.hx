@@ -71,8 +71,7 @@ class Validator {
           + ' placing more pages before or after your comic actually starts -- something that you'
           + ' almost certainly will do. Later versions of Panels will allow you to'
           + ' set a start page to take care of just this scenario.',
-          node.pos
-        ));
+          node.pos));
       }
     }
 

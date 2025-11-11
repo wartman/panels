@@ -1,6 +1,7 @@
-import kit.Cli;
+import Director;
+import kit.io.FileSystem;
 import panels.cli.*;
 
 function main() {
-  Cli.fromSys().execute(new App());
+	Director.fromSys().execute(new App(FileSystem.ofCwd()));
 }

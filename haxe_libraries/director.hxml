@@ -1,0 +1,5 @@
+# @install: lix --silent download "gh://github.com/wartman/director#737ce16270665c774a99cd81af07bb257322b912" into director/0.0.1/github/737ce16270665c774a99cd81af07bb257322b912
+-lib kit
+-cp ${HAXE_LIBCACHE}/director/0.0.1/github/737ce16270665c774a99cd81af07bb257322b912/src
+-D director=0.0.1
+-D use-rtti-doc

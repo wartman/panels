@@ -1,31 +1,29 @@
 package panels;
 
 @:forward
-abstract PanelsConfig(PanelsConfigImpl) from PanelsConfigImpl to PanelsConfigImpl {
-  public function new(config) {
-    this = config;
-  }
-
-  public function withOverrides() {}
+abstract PanelsConfig(PanelsConfigObject) from PanelsConfigObject to PanelsConfigObject {
+	public function new(config) {
+		this = config;
+	}
 }
 
-typedef PanelsConfigImpl = {
-  public final compiler:CompilerConfig;
-  public final validator:ValidatorConfig;
+typedef PanelsConfigObject = {
+	public var compiler:CompilerConfig;
+	public var validator:ValidatorConfig;
 }
 
 typedef CompilerConfig = {
-  public final ?startPage:Int;
-  public final ?includeSections:Bool;
-  public final ?includeFrontmatter:Bool;
-  // @todo: Add more
+	public var ?startPage:Int;
+	public var ?includeSections:Bool;
+	public var ?includeFrontmatter:Bool;
+	// @todo: Add more
 }
 
 typedef ValidatorConfig = {
-  public final ?requireTitle:Bool;
-  public final ?requireAuthor:Bool;
-  // public final ?requireProperties:Array<String>;
-  public final ?maxPanelsPerPage:Int;
-  public final ?maxWordsPerDialog:Int;
-  public final ?checkPanelOrder:Bool;
+	public var ?requireTitle:Bool;
+	public var ?requireAuthor:Bool;
+	// public var ?requireProperties:Array<String>;
+	public var ?maxPanelsPerPage:Int;
+	public var ?maxWordsPerDialog:Int;
+	public var ?checkPanelOrder:Bool;
 }

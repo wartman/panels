@@ -1,9 +1,15 @@
 package panels.generator;
 
-class NullGenerator implements Generator {
-  public function new() {}
+import kit.io.*;
 
-  public function generate(node:Node):Task<String> {
-    return '';
-  }
+class NullGenerator implements Generator {
+	public function new() {}
+
+	public function generate(node:Node):Task<String> {
+		return '';
+	}
+
+	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError> {
+		return Task.nothing();
+	}
 }

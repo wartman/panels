@@ -1,206 +1,203 @@
 package panels.cli;
 
-import kit.cli.*;
-import panels.writer.*;
+import kit.io.IoError;
+import director.*;
 import panels.generator.*;
+import kit.io.FileSystem;
 
-using sys.FileSystem;
-using sys.io.File;
 using haxe.io.Path;
-using kit.cli.StyleTools;
+using director.StyleTools;
 
 /**
-  Tools for compiling and investigating Panels scripts.
+	Tools for compiling and investigating Panels scripts.
 **/
 class App implements Command {
-  /**
-    What file format to compile. Currently can be "odt" or "html".
-  **/
-  @:alias('f')
-  @:flag
-  public var format:String = 'odt';
+	/**
+		What file format to compile. Currently can be "odt" or "html".
+	**/
+	@:flag('f')
+	public var format:String = 'odt';
 
-  /**
-    Where the compiled file should be saved. If left blank,
-    Panels will save it next to the input file. 
-  **/
-  @:alias('d')
-  @:flag
-  public var destination:String = null;
+	/**
+		Where the compiled file should be saved. If left blank,
+		Panels will save it next to the input file. 
+	**/
+	@:flag('d')
+	public var destination:String = null;
 
-  /**
-    If true, Panels will output section titles in the compiled
-    document.
-  **/
-  @:alias('s')
-  public var includeSections:Bool = false;
+	/**
+		If true, Panels will output section titles in the compiled
+		document.
+	**/
+	@:flag('s')
+	public var includeSections:Bool = false;
 
-  /**
-    If true, Panels will fail to compile if the "Title: ..."
-    property is not present in your script's header.
-  **/
-  @:alias('t')
-  @:flag
-  public var requireTitle:Bool = false;
+	/**
+		If true, Panels will fail to compile if the "Title: ..."
+		property is not present in your script's header.
+	**/
+	@:flag('t')
+	public var requireTitle:Bool = false;
 
-  /**
-    If true, Panels will fail to compile if the "Author: ..."
-    property is not present in your script's header.
-  **/
-  @:alias('a')
-  @:flag
-  public var requireAuthor:Bool = false;
+	/**
+		If true, Panels will fail to compile if the "Author: ..."
+		property is not present in your script's header.
+	**/
+	@:flag('a')
+	public var requireAuthor:Bool = false;
 
-  /**
-    If set, Panels will warn you if any of your pages have
-    more than the allowed number of panels.
-  **/
-  @:alias('x')
-  @:flag
-  public var maxPanelsPerPage:Int = null;
+	/**
+		If set, Panels will warn you if any of your pages have
+		more than the allowed number of panels.
+	**/
+	@:flag('x')
+	public var maxPanelsPerPage:Int = null;
 
-  /**
-    Makes sure that panel numbers are in order from lowest to highest.
-  **/
-  @:alias('o')
-  @:flag
-  public var checkPanelOrder:Bool = false;
+	/**
+		Makes sure that panel numbers are in order from lowest to highest.
+	**/
+	@:flag('o')
+	public var checkPanelOrder:Bool = false;
 
-  /**
-    Ignores .panels configuration, if present.
-  **/
-  @:alias('i')
-  @:flag
-  public var ignoreDotPanels:Bool = false;
+	/**
+		Ignores .panels configuration, if present.
+	**/
+	@:flag('i')
+	public var ignoreDotPanels:Bool = false;
 
-  public function new() {}
+	final fs:FileSystem;
 
-  /**
-    Compile your panels script. If a .panels file is present in
-    the any directory that's a parent of the you're running this cli from, 
-    Panels will attempt to load that configuration. Note that you can override
-    .panels config with cli flags, or by using --ignoreDotPanels -i.
+	public function new(?fs:FileSystem) {
+		this.fs = fs ?? FileSystem.ofCwd();
+	}
 
-    (IMPORTANT NOTE: .panels won't actually be overridden yet :v)
-  **/
-  @:command
-  public function compile(src:String):Task<Int> {
-    var file = Path.join([Sys.getCwd(), src]);
-    var dest = destination != null ? destination : Path.join([Sys.getCwd(), src.withoutExtension()]);
+	/**
+		Compile your panels script. If a .panels file is present in
+		the any directory that's a parent of the you're running this cli from, 
+		Panels will attempt to load that configuration. Note that you can override
+		.panels config with cli flags, or by using --ignoreDotPanels -i.
 
-    if (format == null && dest.extension() != null) {
-      format = dest.extension();
-      dest = dest.withoutExtension();
-    }
+		(IMPORTANT NOTE: .panels won't actually be overridden yet :v)
+	**/
+	@:command
+	public function compile(src:String):Task<Int> {
+		var dest = destination != null ? destination : src.withoutExtension();
 
-    return getSource(file).next(source -> {
-      var generator = switch format {
-        case 'odt': new OpenDocumentGenerator({});
-        case 'html': new HtmlGenerator({includeSections: includeSections});
-        default: return Task.reject(new Error(NotFound, 'Invalid format: $format'));
-      }
-      var compiler = createCompiler(source, generator);
-      return compiler.compile();
-    }).next(content -> {
-      var writer:Writer = switch format {
-        case 'html': new HtmlWriter();
-        case 'odt': new OpenDocumentWriter();
-        default: return Task.reject(new Error(InternalError, 'Invalid format: $format'));
-      }
-      return writer.write(dest, content);
-    }).next(_ -> {
-      output.writeLn('')
-        .write('    ')
-        .write(' Success '.bold().backgroundColor(Yellow))
-        .write(' Compiled ')
-        .write(file.bold())
-        .write(' to ')
-        .writeLn(dest.withExtension(format).bold());
-      return 0;
-    });
-  }
+		if (format == null && dest.extension() != null) {
+			format = dest.extension();
+			dest = dest.withoutExtension();
+		}
 
-  /**
-    Get information about your script (such as the current number of pages)
-    without creating any output.
-  **/
-  @:command
-  public function info(src:String):Task<Int> {
-    var file = Path.join([Sys.getCwd(), src]);
+		return getSource(src)
+			.mapError(e -> e.toFailure())
+			.then(source -> {
+				var compiler = createCompiler(source);
+				return compiler.compile();
+			})
+			.then(node -> {
+				var generator = switch format {
+					case 'odt': new OpenDocumentGenerator({});
+					case 'html': new HtmlGenerator({includeSections: includeSections});
+					default: return Task.error(new Failure('Invalid format: $format'));
+				}
+				generator.save(fs, dest, node).mapError(e -> e.toFailure());
+			})
+			.then(_ -> {
+				console.writeLine('')
+					.write('    ')
+					.write(' Success '.bold().backgroundColor(Yellow))
+					.write(' Compiled ')
+					.write(src.bold())
+					.write(' to ')
+					.writeLine(dest.withExtension(format).bold());
+				return 0;
+			});
+	}
 
-    return getSource(file).next(source -> {
-      var compiler = createCompiler(source, new NullGenerator());
-      return compiler.getMetadata();
-    }).next(info -> {
-      function writeInfo(label:String, info:Null<String>) {
-        if (info == null) {
-          info = ' (not provided) '.bold().backgroundColor(Red);
-        }
-        output.write('    ').write(label).write(': ').write(info).writeLn('');
-      }
+	/**
+		Get information about your script (such as the current number of pages)
+		without creating any output.
+	**/
+	@:command
+	public function info(src:String):Task<Int> {
+		return getSource(src)
+			.mapError(e -> e.toFailure())
+			.then(source -> {
+				var compiler = createCompiler(source);
+				return compiler.compile().then(node -> Metadata.parse(node));
+			})
+			.then(info -> {
+				function writeInfo(label:String, info:Null<String>) {
+					if (info == null) {
+						info = ' (not provided) '.bold().backgroundColor(Red);
+					}
+					console.write('    ').write(label).write(': ').write(info).writeLine('');
+				}
 
-      output.writeLn('').write('    ').writeLn('Script Info'.bold()).writeLn('');
+				console.writeLine('').write('    ').writeLine('Script Info'.bold()).writeLine('');
 
-      writeInfo('Title', info.title);
-      writeInfo('Author', info.author);
-      writeInfo('Pages', info.pages + '');
-      writeInfo('Sections', info.sections.length + '');
-      for (section in info.sections) {
-        writeInfo('  ' + section.title, section.pages + ' pages');
-      }
+				writeInfo('Title', info.title);
+				writeInfo('Author', info.author);
+				writeInfo('Pages', info.pages + '');
+				writeInfo('Sections', info.sections.length + '');
+				for (section in info.sections) {
+					writeInfo('  ' + section.title, section.pages + ' pages');
+				}
+				console.writeLine('');
 
-      return 0;
-    });
-  }
+				return 0;
+			});
+	}
 
-  /**
-    Tools to compile a Panels script.
-  **/
-  @:defaultCommand
-  public function documentation():Task<Int> {
-    output.writeLn(getDocs());
-    return 0;
-  }
+	/**
+		Tools to compile a Panels script.
+	**/
+	@:defaultCommand
+	public function documentation():Task<Int> {
+		console.writeLine(getDocs());
+		return 0;
+	}
 
-  function getDefaultConfig():PanelsConfig {
-    return {
-      compiler: {
-        startPage: 1
-      },
-      validator: {
-        requireAuthor: requireAuthor,
-        maxPanelsPerPage: maxPanelsPerPage,
-        checkPanelOrder: checkPanelOrder
-      }
-    };
-  }
+	function getDefaultConfig():PanelsConfig {
+		return {
+			compiler: {
+				startPage: 1
+			},
+			validator: {
+				requireAuthor: requireAuthor,
+				maxPanelsPerPage: maxPanelsPerPage,
+				checkPanelOrder: checkPanelOrder
+			}
+		};
+	}
 
-  function createCompiler(source:Source, generator) {
-    var config:PanelsConfig = if (ignoreDotPanels) {
-      output.writeLn('', '    Ignoring .panels config -- using defaults and CLI flags'.color(Yellow));
-      getDefaultConfig();
-    } else switch DotPanels.find(source.file) {
-      case Some(config):
-        output.writeLn('', '    Using .panels config'.color(Yellow));
-        config;
-      case None:
-        output.writeLn('', '    No .panels config found -- using defaults and CLI flags'.color(Red));
-        getDefaultConfig();
-    }
+	function createCompiler(source:Source) {
+		var config:PanelsConfig = if (ignoreDotPanels) {
+			console.writeLine('').writeLine('    Ignoring .panels config -- using defaults and CLI flags'.color(Yellow));
+			getDefaultConfig();
+		} else switch DotPanels.find(source.file) {
+			case Some(config):
+				console.writeLine('').writeLine('    Using .panels config'.color(Yellow));
+				// @todo: We need a way to detect if flags were set by the user
+				config;
+			case None:
+				console.writeLine('').writeLine('    No .panels config found -- using defaults and CLI flags'.color(Red));
+				getDefaultConfig();
+		}
 
-    // @todo: We need to be able to override the .panels config
-    return new Compiler(source, new VisualReporter(str -> output.writeLn(str)), generator, config);
-  }
+		// @todo: We need to be able to override the .panels config
+		return new Compiler(source, new VisualReporter(str -> console.writeLine(str)), config);
+	}
 
-  function getSource(file:String):Task<Source> {
-    if (file.extension() == '') file = file.withExtension('pan');
-    if (!file.exists()) return new Error(NotFound, 'No file found with that name.');
+	function getSource(file:String):Task<Source, IoError> {
+		if (file.extension() == '') file = file.withExtension('pan');
 
-    var source:Source = {
-      file: file,
-      content: file.getContent()
-    };
-
-    return source;
-  }
+		return fs.detect(file)
+			.then(entry -> entry.tryFile())
+			.then(file -> file.read())
+			.then(content -> ({
+				file: file,
+				content: content
+			} : Source));
+	}
 }

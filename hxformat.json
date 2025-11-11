@@ -1,21 +1,27 @@
 {
-  "indentation": {
-    "character": "  "
-  },
   "sameLine": {
-    "anonFunctionBody": "same",
-    "functionBody": "same",
-    "ifBody": "same",
-    "forBody": "same",
-    "whileBody": "same",
+    "functionBody": "keep",
+    "anonFunctionBody": "keep",
+    "ifBody": "keep",
+    "forBody": "keep",
+    "whileBody": "keep",
     "caseBody": "keep",
     "expressionIf": "keep"
   },
   "whitespace": {
-    "functionTypeHaxe4Policy": "none"
+    "arrowFunctionsPolicy": "around"
   },
   "wrapping": {
     "opAddSubChain": {
+      "defaultWrap": "keep"
+    },
+    "methodChain": {
+      "defaultWrap": "keep"
+    },
+    "arrayWrap": {
+      "defaultWrap": "keep"
+    },
+    "callParameter": {
       "defaultWrap": "keep"
     }
   }
