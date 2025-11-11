@@ -8,6 +8,7 @@ import panels.PanelsConfig;
 
 using haxe.io.Path;
 using panels.generator.XmlTools;
+using StringTools;
 
 typedef OpenDocumentGeneratorContext = {
 	public var currentPage:Int;
@@ -26,7 +27,8 @@ class OpenDocumentGenerator implements Generator {
 	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError> {
 		return generate(node)
 			.mapError(e -> Other(e))
-			.then(contents -> fs.detect(path.directory())
+			.then(contents -> fs
+				.detect(path.directory())
 				.then(entry -> entry.ensureDirectory())
 				.then(dir -> dir.file(path.withoutDirectory().withExtension('fodt')).write(contents))
 			)
@@ -40,7 +42,8 @@ class OpenDocumentGenerator implements Generator {
 			currentPage: (config.startPage ?? 1) - 1,
 			currentPanel: 0
 		}));
-		return doc.toString();
+
+		return haxe.xml.Printer.print(doc);
 	}
 
 	function generateNode(node:Node, context:OpenDocumentGeneratorContext):Xml {
@@ -48,7 +51,7 @@ class OpenDocumentGenerator implements Generator {
 			case Document(frontmatter, nodes):
 				generateDocument(frontmatter, nodes, context);
 			case Section(_):
-				p();
+				fragment();
 			case Page(nodes):
 				generatePage(nodes, context);
 			case TwoPage(nodes):
@@ -65,7 +68,14 @@ class OpenDocumentGenerator implements Generator {
 				generateDialog('CAPTION', modifiers, content, context);
 			case Aside(nodes):
 				// @todo
-				p(...nodes.map(n -> generateNode(n, context)));
+				fragment(...nodes.map(n -> switch n.node {
+					case Paragraph(nodes):
+						var xml = p(...nodes.map(n -> generateNode(n, context)));
+						xml.set('text:style-name', 'PASIDE');
+						xml;
+					default:
+						generateNode(n, context);
+				}));
 			case Paragraph(nodes):
 				p(...nodes.map(n -> generateNode(n, context)));
 		}
@@ -76,7 +86,7 @@ class OpenDocumentGenerator implements Generator {
 		// doc.set('xmlns:office', 'urn:oasis:names:tc:opendocument:xmlns:office:1.0');
 		// doc.set('office:mimetype', 'application/vnd.oasis.opendocument.text');
 		// doc.set('office:version', '1.3');
-		var doc = Xml.parse('<office:document
+		var doc = parseXml('<office:document
       xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
       xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
       xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" 
@@ -115,110 +125,107 @@ class OpenDocumentGenerator implements Generator {
       xmlns:officeooo="http://openoffice.org/2009/office"
       office:version="1.3"
       office:mimetype="application/vnd.oasis.opendocument.text"
-    />')
-			.firstChild();
-		doc.append(Xml.parse('
- <office:automatic-styles>
-  <style:style style:name="P1" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties officeooo:rsid="000993cf" officeooo:paragraph-rsid="000993cf"/>
-  </style:style>
-  <style:style style:name="P2" style:family="paragraph" style:parent-style-name="Standard">
-   <style:text-properties fo:font-weight="bold" officeooo:rsid="000993cf" officeooo:paragraph-rsid="000993cf" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
-  </style:style>
-  <style:style style:name="P3" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:text-properties officeooo:paragraph-rsid="000993cf"/>
-  </style:style>
-  <style:style style:name="P4" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" fo:text-align="center" style:justify-single-word="false" style:writing-mode="lr-tb"/>
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" fo:background-color="transparent"/>
-  </style:style>
-  <style:style style:name="P5" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="bold" style:text-blinking="false" fo:background-color="transparent"/>
-  </style:style>
-  <style:style style:name="P6" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
-  </style:style>
-  <style:style style:name="P7" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" fo:text-align="center" style:justify-single-word="false" style:writing-mode="lr-tb"/>
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
-  </style:style>
-  <style:style style:name="P8" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
-  </style:style>
-  <style:style style:name="P9" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" fo:text-align="center" style:justify-single-word="false" style:writing-mode="lr-tb"/>
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
-  </style:style>
-  <style:style style:name="P10" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
-  </style:style>
-  <style:style style:name="P11" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:break-before="page"/>
-  </style:style>
-  <style:style style:name="P12" style:family="paragraph" style:parent-style-name="Text_20_body">
-   <style:paragraph-properties fo:break-before="page"/>
-   <style:text-properties officeooo:paragraph-rsid="000993cf"/>
-  </style:style>
-  <style:style style:name="T1" style:family="text">
-   <style:text-properties officeooo:rsid="000993cf"/>
-  </style:style>
-  <style:style style:name="T2" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none"  fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:style style:name="T3" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="bold" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:style style:name="T4" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:style style:name="T5" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:style style:name="T6" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:text-underline-style="none" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:style style:name="T7" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:font-name="Arial" fo:font-size="14pt" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:style style:name="T8" style:family="text">
-   <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:background-color="transparent" loext:char-shading-value="0"/>
-  </style:style>
-  <style:page-layout style:name="pm1">
-   <style:page-layout-properties fo:page-width="8.5in" fo:page-height="11in" style:num-format="1" style:print-orientation="portrait" fo:margin-top="0.7874in" fo:margin-bottom="0.7874in" fo:margin-left="0.7874in" fo:margin-right="0.7874in" style:writing-mode="lr-tb" style:layout-grid-color="#c0c0c0" style:layout-grid-lines="20" style:layout-grid-base-height="0.278in" style:layout-grid-ruby-height="0.139in" style:layout-grid-mode="none" style:layout-grid-ruby-below="false" style:layout-grid-print="false" style:layout-grid-display="false" style:footnote-max-height="0in">
-    <style:footnote-sep style:width="0.0071in" style:distance-before-sep="0.0398in" style:distance-after-sep="0.0398in" style:line-style="solid" style:adjustment="left" style:rel-width="25%" style:color="#000000"/>
-   </style:page-layout-properties>
-   <style:header-style/>
-   <style:footer-style/>
-  </style:page-layout>
- </office:automatic-styles>'));
-		doc.append(Xml.parse('<office:styles>
-  <style:default-style style:family="graphic">
-   <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="0.1181in" draw:shadow-offset-y="0.1181in" draw:start-line-spacing-horizontal="0.1114in" draw:start-line-spacing-vertical="0.1114in" draw:end-line-spacing-horizontal="0.1114in" draw:end-line-spacing-vertical="0.1114in" style:flow-with-text="false"/>
-   <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:font-independent-line-spacing="false">
-    <style:tab-stops/>
-   </style:paragraph-properties>
-   <style:text-properties style:use-window-font-color="true" loext:opacity="0%" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="NSimSun" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lucida Sans" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN"/>
-  </style:default-style>
-  <style:default-style style:family="paragraph">
-   <style:paragraph-properties fo:orphans="2" fo:widows="2" fo:hyphenation-ladder-count="no-limit" style:text-autospace="ideograph-alpha" style:punctuation-wrap="hanging" style:line-break="strict" style:tab-stop-distance="0.4925in" style:writing-mode="page"/>
-   <style:text-properties style:use-window-font-color="true" loext:opacity="0%" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="NSimSun" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lucida Sans" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN" fo:hyphenate="false" fo:hyphenation-remain-char-count="2" fo:hyphenation-push-char-count="2" loext:hyphenation-no-caps="false"/>
-  </style:default-style>
-  <style:default-style style:family="table">
-   <style:table-properties table:border-model="collapsing"/>
-  </style:default-style>
-  <style:default-style style:family="table-row">
-   <style:table-row-properties fo:keep-together="auto"/>
-  </style:default-style>
-    
+    />').firstChild();
+		doc.append(parseXml('<office:automatic-styles>
+      <style:style style:name="P1" style:family="paragraph" style:parent-style-name="Standard">
+      <style:text-properties officeooo:rsid="000993cf" officeooo:paragraph-rsid="000993cf"/>
+      </style:style>
+      <style:style style:name="P2" style:family="paragraph" style:parent-style-name="Standard">
+      <style:text-properties fo:font-weight="bold" officeooo:rsid="000993cf" officeooo:paragraph-rsid="000993cf" style:font-weight-asian="bold" style:font-weight-complex="bold"/>
+      </style:style>
+      <style:style style:name="P3" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:text-properties officeooo:paragraph-rsid="000993cf"/>
+      </style:style>
+      <style:style style:name="P4" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" fo:text-align="center" style:justify-single-word="false" style:writing-mode="lr-tb"/>
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" fo:background-color="transparent"/>
+      </style:style>
+      <style:style style:name="P5" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="bold" style:text-blinking="false" fo:background-color="transparent"/>
+      </style:style>
+      <style:style style:name="P6" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
+      </style:style>
+      <style:style style:name="P7" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" fo:text-align="center" style:justify-single-word="false" style:writing-mode="lr-tb"/>
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
+      </style:style>
+      <style:style style:name="P8" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
+      </style:style>
+      <style:style style:name="P9" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" fo:text-align="center" style:justify-single-word="false" style:writing-mode="lr-tb"/>
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
+      </style:style>
+      <style:style style:name="P10" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0in" style:contextual-spacing="false" fo:line-height="138%" style:writing-mode="lr-tb"/>
+      </style:style>
+      <style:style style:name="P11" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:break-before="page"/>
+      </style:style>
+      <style:style style:name="P12" style:family="paragraph" style:parent-style-name="Text_20_body">
+      <style:paragraph-properties fo:break-before="page"/>
+      <style:text-properties officeooo:paragraph-rsid="000993cf"/>
+      </style:style>
+      <style:style style:name="T1" style:family="text">
+      <style:text-properties officeooo:rsid="000993cf"/>
+      </style:style>
+      <style:style style:name="T2" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none"  fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:style style:name="T3" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="bold" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:style style:name="T4" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:style style:name="T5" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-size="11pt" fo:font-style="italic" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:style style:name="T6" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:text-underline-style="none" style:text-blinking="false" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:style style:name="T7" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:font-name="Arial" fo:font-size="14pt" fo:font-style="normal" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:font-weight="normal" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:style style:name="T8" style:family="text">
+      <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color" fo:background-color="transparent" loext:char-shading-value="0"/>
+      </style:style>
+      <style:page-layout style:name="pm1">
+      <style:page-layout-properties fo:page-width="8.5in" fo:page-height="11in" style:num-format="1" style:print-orientation="portrait" fo:margin-top="0.7874in" fo:margin-bottom="0.7874in" fo:margin-left="0.7874in" fo:margin-right="0.7874in" style:writing-mode="lr-tb" style:layout-grid-color="#c0c0c0" style:layout-grid-lines="20" style:layout-grid-base-height="0.278in" style:layout-grid-ruby-height="0.139in" style:layout-grid-mode="none" style:layout-grid-ruby-below="false" style:layout-grid-print="false" style:layout-grid-display="false" style:footnote-max-height="0in">
+        <style:footnote-sep style:width="0.0071in" style:distance-before-sep="0.0398in" style:distance-after-sep="0.0398in" style:line-style="solid" style:adjustment="left" style:rel-width="25%" style:color="#000000"/>
+      </style:page-layout-properties>
+      <style:header-style/>
+      <style:footer-style/>
+      </style:page-layout>
+    </office:automatic-styles>'));
+		doc.append(parseXml('<office:styles>
+      <style:default-style style:family="graphic">
+      <style:graphic-properties svg:stroke-color="#3465a4" draw:fill-color="#729fcf" fo:wrap-option="no-wrap" draw:shadow-offset-x="0.1181in" draw:shadow-offset-y="0.1181in" draw:start-line-spacing-horizontal="0.1114in" draw:start-line-spacing-vertical="0.1114in" draw:end-line-spacing-horizontal="0.1114in" draw:end-line-spacing-vertical="0.1114in" style:flow-with-text="false"/>
+      <style:paragraph-properties style:text-autospace="ideograph-alpha" style:line-break="strict" style:font-independent-line-spacing="false">
+        <style:tab-stops/>
+      </style:paragraph-properties>
+      <style:text-properties style:use-window-font-color="true" loext:opacity="0%" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="NSimSun" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lucida Sans" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN"/>
+      </style:default-style>
+      <style:default-style style:family="paragraph">
+      <style:paragraph-properties fo:orphans="2" fo:widows="2" fo:hyphenation-ladder-count="no-limit" style:text-autospace="ideograph-alpha" style:punctuation-wrap="hanging" style:line-break="strict" style:tab-stop-distance="0.4925in" style:writing-mode="page"/>
+      <style:text-properties style:use-window-font-color="true" loext:opacity="0%" style:font-name="Liberation Serif" fo:font-size="12pt" fo:language="en" fo:country="US" style:letter-kerning="true" style:font-name-asian="NSimSun" style:font-size-asian="10.5pt" style:language-asian="zh" style:country-asian="CN" style:font-name-complex="Lucida Sans" style:font-size-complex="12pt" style:language-complex="hi" style:country-complex="IN" fo:hyphenate="false" fo:hyphenation-remain-char-count="2" fo:hyphenation-push-char-count="2" loext:hyphenation-no-caps="false"/>
+      </style:default-style>
+      <style:default-style style:family="table">
+      <style:table-properties table:border-model="collapsing"/>
+      </style:default-style>
+      <style:default-style style:family="table-row">
+      <style:table-row-properties fo:keep-together="auto"/>
+      </style:default-style>
       <style:style style:name="Standard" style:family="paragraph" style:class="text"/>
       <style:style style:name="Text_20_body" style:display-name="Text body" style:family="paragraph" style:parent-style-name="Standard" style:class="text">
         <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.0972in" style:contextual-spacing="false" fo:line-height="115%"/>
       </style:style>
       <style:style style:name="PBASE" style:display-name="Panels: Base styles" style:parent-style-name="Text_20_body" style:family="paragraph">
-        <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Arial" fo:font-family="Arial" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
+        <style:text-properties fo:font-variant="normal" fo:text-transform="none" fo:color="#000000" loext:opacity="100%" style:text-line-through-style="none" style:text-line-through-type="none" style:font-name="Courier" fo:font-family="Courier" fo:font-size="11pt" fo:font-style="normal" style:text-underline-style="none" fo:font-weight="normal" style:text-blinking="false" fo:background-color="transparent"/>
       </style:style>
       <style:style style:name="PI" style:display-name="Panels: Italic" style:parent-style-name="Text_20_body" style:family="text">
         <style:text-properties fo:font-style="italic" />
@@ -230,18 +237,24 @@ class OpenDocumentGenerator implements Generator {
         <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.4in" style:contextual-spacing="false"/>
         <style:text-properties fo:text-transform="uppercase" fo:font-size="14pt" style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color"/>
       </style:style>
+      <style:style style:name="PPANEL" style:display-name="Panels: Panel Title" style:parent-style-name="PBASE" style:family="paragraph">
+        <style:text-properties fo:text-transform="uppercase" fo:font-weight="bold" />
+      </style:style>
       <style:style style:name="PPAGEBREAK" style:display-name="Panels: Page Break" style:parent-style-name="Standard" style:family="paragraph">
         <style:paragraph-properties fo:break-before="page"/>
+      </style:style>
+      <style:style style:name="PASIDE" style:display-name="Panels: Aside" style:parent-style-name="PBASE" style:family="paragraph">
+        <style:paragraph-properties fo:margin-left="0.5in" fo:margin-right="0.5in" fo:text-indent="0in" style:auto-text-indent="false"/>
       </style:style>
       <style:style style:name="PDIALOG" style:display-name="Panels: Dialog" style:family="paragraph" style:parent-style-name="PBASE">
         <style:paragraph-properties fo:text-align="center" style:justify-single-word="false"/>
       </style:style>
     </office:styles>'));
 
-		doc.append(Xml.parse('<office:font-face-decls>
+		doc.append(parseXml('<office:font-face-decls>
       <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss" style:font-pitch="variable"/>
     </office:font-face-decls>'));
-		doc.append(Xml.parse('<office:master-styles>
+		doc.append(parseXml('<office:master-styles>
       <style:master-page style:name="Standard" style:page-layout-name="pm1"/>
     </office:master-styles>'));
 		doc.append(Xml.createElement('office:meta'));
@@ -253,14 +266,16 @@ class OpenDocumentGenerator implements Generator {
 
 		var textBody = Xml.createElement('office:text');
 		textBody.set('text:use-soft-page-breaks', 'true');
-		textBody.append(Xml.parse('<text:sequence-decls>
+		textBody.append(parseXml('<text:sequence-decls>
       <text:sequence-decl text:display-outline-level="0" text:name="Illustration"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Table"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Text"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Drawing"/>
       <text:sequence-decl text:display-outline-level="0" text:name="Figure"/>
     </text:sequence-decls>'));
+
 		for (node in nodes) textBody.append(generateNode(node, context));
+
 		body.append(textBody);
 
 		return doc;
@@ -295,11 +310,11 @@ class OpenDocumentGenerator implements Generator {
 		var children = nodes.map(n -> generateNode(n, context));
 		var title = switch isTwoPager {
 			case true:
-				var title = p(Xml.createPCData('Pages ${context.currentPage} to ${context.currentPage + 1} (Spread) - ${context.currentPanel} panels'));
+				var title = h(Xml.createPCData('Pages ${context.currentPage} to ${context.currentPage + 1} (Spread) - ${context.currentPanel} panels'));
 				context.currentPage += 1;
 				title;
 			case false:
-				p(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
+				h(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
 		}
 		title.set('text:style-name', 'PTITLE');
 
@@ -317,28 +332,14 @@ class OpenDocumentGenerator implements Generator {
 		context.currentPanel++;
 
 		var children = nodes.copy();
-		var first = children.shift();
 		var panel = Xml.createDocument();
 		var number = Std.string(switch type {
 			case Auto: context.currentPanel;
 			case UserDefined(number): number;
 		});
-		var panelStart = span(Xml.createPCData('PANEL ${number}:'));
-		panelStart.set('text:style-name', 'PB');
-
-		if (first != null) switch first.node {
-			case Paragraph(nodes):
-				var content = nodes.map(n -> generateNode(n, context));
-				content.unshift(panelStart);
-				content.unshift(Xml.createPCData(' '));
-				panel.append(p(...content));
-			default:
-				panel.append(panelStart);
-				panel.append(generateNode(first, context));
-		}
-		else {
-			panel.append(panelStart);
-		}
+		var label = h(Xml.createPCData('PANEL ${number}'));
+		label.set('text:style-name', 'PPANEL');
+		panel.append(label);
 
 		for (child in children) panel.append(generateNode(child, context));
 
@@ -368,10 +369,27 @@ class OpenDocumentGenerator implements Generator {
 		return node;
 	}
 
+	function h(...content:Xml) {
+		var node = Xml.createElement('text:h');
+		node.set('text:style-name', 'PBASE');
+		for (item in content) node.append(item);
+		return node;
+	}
+
 	function p(...content:Xml) {
 		var node = Xml.createElement('text:p');
 		node.set('text:style-name', 'PBASE');
 		for (item in content) node.append(item);
 		return node;
+	}
+
+	function fragment(...content:Xml) {
+		var node = Xml.createDocument();
+		for (item in content) node.append(item);
+		return node;
+	}
+
+	function parseXml(text:String) {
+		return Xml.parse(text.split('\n').map(line -> line.trim()).join(' '));
 	}
 }

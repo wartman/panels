@@ -73,11 +73,11 @@ class App implements Command {
 
 	/**
 		Compile your panels script. If a .panels file is present in
-		the any directory that's a parent of the you're running this cli from, 
+		any directory that's a parent of the one you're running this app in, 
 		Panels will attempt to load that configuration. Note that you can override
 		.panels config with cli flags, or by using --ignoreDotPanels -i.
 
-		(IMPORTANT NOTE: .panels won't actually be overridden yet :v)
+		(IMPORTANT NOTE: .panels won't actually be overridden yet)
 	**/
 	@:command
 	public function compile(src:String):Task<Int> {

@@ -23,15 +23,9 @@ class HtmlGenerator implements Generator {
 	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError> {
 		return generate(node)
 			.mapError(e -> Other(e))
-			.then(contents -> fs.detect(path.directory())
-				.then(entry -> {
-					switch entry {
-						case Directory(stat, directory):
-							trace(stat.path);
-						default:
-					}
-					entry.ensureDirectory();
-				})
+			.then(contents -> fs
+				.detect(path.directory())
+				.then(entry -> entry.ensureDirectory())
 				.then(dir -> dir.file(path.withoutDirectory().withExtension('html')).write(contents))
 			)
 			.then(_ -> Task.nothing());
