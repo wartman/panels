@@ -186,7 +186,7 @@ class App implements Command {
 			console.writeLine('').writeLine('    Ignoring .panels config -- using defaults and CLI flags'.color(Yellow));
 			Future.of(getDefaultConfig());
 		} else {
-			DotPanels.find(fs, path)
+			DotPanels.find(fs.directory(path.directory()))
 				.inspect(_ -> console.writeLine('').writeLine('    Using .panels config'.color(Yellow)))
 				.recover(_ -> {
 					console.writeLine('').writeLine('    No .panels config found -- using defaults and CLI flags'.color(Red));
