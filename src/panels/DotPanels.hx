@@ -12,8 +12,8 @@ using Reflect;
 using haxe.io.Path;
 
 class DotPanels {
-	public static function find(path:String):Task<PanelsConfig, IoError> {
-		return locateDotPanelsFile(FileSystem.ofCwd().directory(path.directory()))
+	public static function find(fs:FileSystem, path:String):Task<PanelsConfig, IoError> {
+		return locateDotPanelsFile(fs.directory(path.directory()))
 			.then(pair -> switch pair {
 				case {a: stat, b: file}:
 					file.read().then(content -> ({
