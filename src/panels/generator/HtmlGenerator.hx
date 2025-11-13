@@ -52,14 +52,30 @@ class HtmlGenerator implements Generator {
   <body>
     <style>
       body {
-        font-family: sans-serif, "Helvetica Neue", arial;
+        font-family: Courier, monospace;
         font-size: 15px;
       }
+
+			h1, h2, h3, h4, h5 {
+				font-size: inherit;
+				margin: 0;
+			}
 
       .document {
         max-width: 700px;
         margin: 0 auto;
       }
+
+			.comic-header {
+        margin: 0 0 20px 0;
+        padding: 0 0 20px 0;
+        border-bottom: 1px solid #000000;
+			}
+
+			.comic-header-content {
+        max-width: 700px;
+        margin: 0 auto;
+			}
 
       .section-header {
         margin: 0 0 20px 0;
@@ -84,7 +100,7 @@ class HtmlGenerator implements Generator {
 
       .page-header {
         margin: 0 0 20px 0;
-        text-decoration: underline;
+        font-weight: bold;
         text-transform: uppercase;
       }
 
@@ -94,7 +110,6 @@ class HtmlGenerator implements Generator {
       }
 
       .panel-header {
-        font-weight: bold;
         text-transform: uppercase;
       }
 
@@ -125,9 +140,11 @@ class HtmlGenerator implements Generator {
         padding-left: 20px;
       }
     </style>
-    <header class="comic-header page">
-      <h1>$title</h1>
-      <h2>By $author</h2>
+    <header class="comic-header">
+			<div class="comic-header-content">
+				<h1>$title</h1>
+				<h2>By $author</h2>
+			</div>
     </header>
     ${generateNode(node)}
   </body>

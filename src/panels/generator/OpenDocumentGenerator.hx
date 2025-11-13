@@ -67,13 +67,7 @@ class OpenDocumentGenerator implements Generator {
 			case Caption(modifiers, content):
 				generateDialog('CAPTION', modifiers, content, context);
 			case Aside(nodes):
-				// @todo
-				fragment(nodes.map(n -> switch n.node {
-					case Paragraph(nodes):
-						p(['text:style-name' => 'PASIDE'], nodes.map(n -> generateNode(n, context)));
-					default:
-						generateNode(n, context);
-				}));
+				generateAside(nodes, context);
 			case Paragraph(nodes):
 				p([], nodes.map(n -> generateNode(n, context)));
 		}
@@ -343,6 +337,15 @@ class OpenDocumentGenerator implements Generator {
 				el;
 			}))
 		]);
+	}
+
+	function generateAside(nodes:Array<Node>, context:OpenDocumentGeneratorContext) {
+		return fragment(nodes.map(n -> switch n.node {
+			case Paragraph(nodes):
+				p(['text:style-name' => 'PASIDE'], nodes.map(n -> generateNode(n, context)));
+			default:
+				generateNode(n, context);
+		}));
 	}
 
 	function node(tag:String, attrs:Map<String, String>, children:Array<Xml>):Xml {

@@ -95,9 +95,8 @@ class App implements Command {
 			dest = dest.withoutExtension();
 		}
 
-		return getSource(src)
+		return getSource(src).and(getConfig(src))
 			.mapError(e -> e.toFailure())
-			.then(source -> Task.ok(source).and(getConfig(source.file)))
 			.then(pair -> createCompiler(pair.b, pair.a).compile().and(pair.b))
 			.then(pair -> {
 				pair.extract(try {a: node, b: config});
@@ -128,9 +127,8 @@ class App implements Command {
 	**/
 	@:command
 	public function info(src:String):Task<Int> {
-		return getSource(src)
+		return getSource(src).and(getConfig(src))
 			.mapError(e -> e.toFailure())
-			.then(source -> Task.ok(source).and(getConfig(source.file)))
 			.then(pair -> createCompiler(pair.b, pair.a).compile().then(node -> Metadata.parse(node)))
 			.then(info -> {
 				function writeInfo(label:String, info:Null<String>) {
