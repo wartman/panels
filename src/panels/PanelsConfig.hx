@@ -16,6 +16,7 @@ typedef CompilerConfig = {
 	public var ?startPage:Int;
 	public var ?includeSections:Bool;
 	public var ?includeFrontmatter:Bool;
+	public var ?includePanelCount:Bool;
 	// @todo: Add more
 }
 

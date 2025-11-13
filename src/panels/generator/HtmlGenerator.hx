@@ -162,7 +162,7 @@ class HtmlGenerator implements Generator {
 				panelNumber = 1;
 				panelCount = 0;
 
-				var pageDisplay = switch node.node {
+				var pageHeader = switch node.node {
 					case TwoPage(_):
 						'Pages ${pageNumber++} to ${pageNumber++} (Spread)';
 					default:
@@ -170,8 +170,12 @@ class HtmlGenerator implements Generator {
 				}
 				var body = nodes.map(generateNode).join('');
 
+				if (config.includePanelCount) {
+					pageHeader = '$pageHeader - $panelCount Panels';
+				}
+
 				'<section class="page">'
-				+ '<header class="page-header">${pageDisplay} - $panelCount Panels</header>'
+				+ '<header class="page-header">$pageHeader</header>'
 				+ body
 				+ '</section>';
 			case Panel(type, nodes):

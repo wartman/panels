@@ -51,7 +51,7 @@ class OpenDocumentGenerator implements Generator {
 			case Document(frontmatter, nodes):
 				generateDocument(frontmatter, nodes, context);
 			case Section(_):
-				fragment();
+				fragment([]);
 			case Page(nodes):
 				generatePage(nodes, context);
 			case TwoPage(nodes):
@@ -68,16 +68,14 @@ class OpenDocumentGenerator implements Generator {
 				generateDialog('CAPTION', modifiers, content, context);
 			case Aside(nodes):
 				// @todo
-				fragment(...nodes.map(n -> switch n.node {
+				fragment(nodes.map(n -> switch n.node {
 					case Paragraph(nodes):
-						var xml = p(...nodes.map(n -> generateNode(n, context)));
-						xml.set('text:style-name', 'PASIDE');
-						xml;
+						p(['text:style-name' => 'PASIDE'], nodes.map(n -> generateNode(n, context)));
 					default:
 						generateNode(n, context);
 				}));
 			case Paragraph(nodes):
-				p(...nodes.map(n -> generateNode(n, context)));
+				p([], nodes.map(n -> generateNode(n, context)));
 		}
 	}
 
@@ -282,23 +280,19 @@ class OpenDocumentGenerator implements Generator {
 	}
 
 	function generateParagraph(nodes:Array<Node>, context) {
-		return p(...nodes.map(n -> generateNode(n, context)));
+		return p([], nodes.map(n -> generateNode(n, context)));
 	}
 
 	function generateText(content:TextType):Xml {
 		return switch content {
 			case Normal(value):
-				Xml.createPCData(value);
+				text(value);
 			case Bold(value):
-				var b = span(Xml.createPCData(value));
-				b.set('text:style-name', 'PB');
-				b;
+				span(['text:style-name' => 'PB'], [text(value)]);
 			case Italic(value):
-				var i = span(Xml.createPCData(value));
-				i.set('text:style-name', 'PI');
-				i;
+				span(['text:style-name' => 'PI'], [text(value)]);
 			case Link(label, url):
-				Xml.createPCData('(link not implemented yet)');
+				text('(link not implemented yet)');
 		}
 	}
 
@@ -306,87 +300,84 @@ class OpenDocumentGenerator implements Generator {
 		context.currentPage++;
 		context.currentPanel = 0;
 
-		var body = Xml.createDocument();
 		var children = nodes.map(n -> generateNode(n, context));
-		var title = switch isTwoPager {
+		var titleText = switch isTwoPager {
 			case true:
-				var title = h(Xml.createPCData('Pages ${context.currentPage} to ${context.currentPage + 1} (Spread) - ${context.currentPanel} panels'));
+				var title = 'Pages ${context.currentPage} to ${context.currentPage + 1} (Spread)';
 				context.currentPage += 1;
 				title;
 			case false:
-				h(Xml.createPCData('Page ${context.currentPage} - ${context.currentPanel} panels'));
+				'Page ${context.currentPage}';
 		}
-		title.set('text:style-name', 'PTITLE');
 
-		body.append(title);
-		for (child in children) body.append(child);
+		if (config.includePanelCount) {
+			titleText += ' - ${context.currentPanel} Panels';
+		}
 
-		var pageBreak = p(Xml.createElement('text:line-break'));
-		pageBreak.set('text:style-name', "PPAGEBREAK");
-		body.append(pageBreak);
-
-		return body;
+		return fragment([
+			h(['text:style-name' => 'PTITLE'], [text(titleText)]),
+			fragment(children),
+			p(['text:style-name' => 'PPAGEBREAK'], [node('text:line-break', [], [])])
+		]);
 	}
 
-	function generatePanel(type:PanelType, nodes:Array<Node>, context:OpenDocumentGeneratorContext) {
+	function generatePanel(type:PanelType, children:Array<Node>, context:OpenDocumentGeneratorContext) {
 		context.currentPanel++;
 
-		var children = nodes.copy();
-		var panel = Xml.createDocument();
 		var number = Std.string(switch type {
 			case Auto: context.currentPanel;
 			case UserDefined(number): number;
 		});
-		var label = h(Xml.createPCData('PANEL ${number}'));
-		label.set('text:style-name', 'PPANEL');
-		panel.append(label);
 
-		for (child in children) panel.append(generateNode(child, context));
-
-		return panel;
+		return fragment([
+			h(['text:style-name' => 'PPANEL'], [text('PANEL ${number}')]),
+			fragment(children.map(child -> generateNode(child, context)))
+		]);
 	}
 
 	function generateDialog(name:String, modifiers:Array<Node>, content:Array<Node>, context:OpenDocumentGeneratorContext) {
-		var dialog = Xml.createDocument();
-		var title = p(Xml.createPCData(name));
-		// @todo: modifiers -- they should be children of title.
-		title.set('text:style-name', 'PDIALOG');
-		dialog.append(title);
-
-		var children = content.map(n -> generateNode(n, context)).map(el -> {
-			el.set('text:style-name', 'PDIALOG');
-			el;
-		});
-
-		for (el in children) dialog.append(el);
-
-		return dialog;
+		return fragment([
+			p(['text:style-name' => 'PDIALOG'], [text(name)]),
+			fragment(content.map(n -> generateNode(n, context)).map(el -> {
+				el.set('text:style-name', 'PDIALOG');
+				el;
+			}))
+		]);
 	}
 
-	function span(...content:Xml) {
-		var node = Xml.createElement('text:span');
-		for (item in content) node.append(item);
+	function node(tag:String, attrs:Map<String, String>, children:Array<Xml>):Xml {
+		var node = Xml.createElement(tag);
+		for (key => value in attrs) node.set(key, value);
+		for (item in children) node.append(item);
 		return node;
 	}
 
-	function h(...content:Xml) {
-		var node = Xml.createElement('text:h');
-		node.set('text:style-name', 'PBASE');
-		for (item in content) node.append(item);
-		return node;
+	function span(attrs:Map<String, String>, children:Array<Xml>) {
+		return node('text:span', attrs, children);
 	}
 
-	function p(...content:Xml) {
-		var node = Xml.createElement('text:p');
-		node.set('text:style-name', 'PBASE');
-		for (item in content) node.append(item);
-		return node;
+	function h(attrs:Map<String, String>, children:Array<Xml>) {
+		if (!attrs.exists('text:style-name')) {
+			attrs.set('text:style-name', 'PBASE');
+		}
+		return node('text:h', attrs, children);
 	}
 
-	function fragment(...content:Xml) {
+	function p(attrs:Map<String, String>, children:Array<Xml>) {
+		if (!attrs.exists('text:style-name')) {
+			attrs.set('text:style-name', 'PBASE');
+		}
+		return node('text:p', attrs, children);
+	}
+
+	function fragment(content:Array<Xml>) {
 		var node = Xml.createDocument();
 		for (item in content) node.append(item);
 		return node;
+	}
+
+	function text(content:String) {
+		return Xml.createPCData(content);
 	}
 
 	function parseXml(text:String) {

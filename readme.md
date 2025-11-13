@@ -60,7 +60,7 @@ npx panels compile path/to/your/example -f html
 ```
 If everything goes well, you should see `example.html` appear next to `example.pan`. Open it up in any browser and look around.
 
-> You can also export an `fodt` file (which is in fact the default), which should be readable by most text processors. However that's still super early and the results aren't great yet.
+> You can also export an `fodt` file (which is in fact the default), which should be readable by most word processors. However that's still super early and the results aren't great yet.
 
 You can also get information about your script without compiling it:
 
@@ -80,7 +80,7 @@ An important note: if you already have Haxe installed and attempt to run `haxe b
 Documentation
 -------------
 
-> Note: These docs are still a work in progress, here more so I remember what everything does than anything else. In addition, they currently assume you have some familiarity with programming and CLI ("Command Line Interface") programs. Hopefully as Panels gets better this will improve!
+> Note: These docs are still a work in progress, here more so I remember what everything does than anything else. In addition, they currently assume you have some familiarity with programming and CLI (Command Line Interface) programs. Hopefully as Panels gets better this will improve!
 
 Panels' syntax is designed to be simple, readable and straightforward.
 
@@ -92,9 +92,9 @@ Comments can go anywhere, and they're ignored and removed completely at compile 
 /* Like this! */
 ```
 
-For simplicity, Panels currently only has this one kind of comment.
+For simplicity, Panels currently only has one kind of comment.
 
-> Incidentally, nesting comments (like `/* this /* is */ fine */`) is also supported. 
+> Incidentally, nesting comments (for example: `/* this /* is */ fine */`) is also supported. 
 
 ### Frontmatter
 

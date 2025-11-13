@@ -33,6 +33,13 @@ class App implements Command {
 	public var includeSections:Bool = false;
 
 	/**
+		If true, Panels will output panel counts in the compiled
+		document next to the page number (e.g. "Page 3 - 4 Panels").
+	**/
+	@:flag('s')
+	public var includePanelCount:Bool = false;
+
+	/**
 		If true, Panels will fail to compile if the "Title: ..."
 		property is not present in your script's header.
 	**/
@@ -90,16 +97,17 @@ class App implements Command {
 
 		return getSource(src)
 			.mapError(e -> e.toFailure())
-			.then(source -> {
-				var compiler = createCompiler(source);
-				return compiler.compile();
-			})
-			.then(node -> {
+			.then(source -> Task.ok(source).and(getConfig(source.file)))
+			.then(pair -> createCompiler(pair.b, pair.a).compile().and(pair.b))
+			.then(pair -> {
+				pair.extract(try {a: node, b: config});
+
 				var generator = switch format {
-					case 'odt': new OpenDocumentGenerator({});
-					case 'html': new HtmlGenerator({includeSections: includeSections});
+					case 'odt' | 'fodt': new OpenDocumentGenerator(config.compiler);
+					case 'html': new HtmlGenerator(config.compiler);
 					default: return Task.error(new Failure('Invalid format: $format'));
 				}
+
 				generator.save(fs, dest, node).mapError(e -> e.toFailure());
 			})
 			.then(_ -> {
@@ -122,10 +130,8 @@ class App implements Command {
 	public function info(src:String):Task<Int> {
 		return getSource(src)
 			.mapError(e -> e.toFailure())
-			.then(source -> {
-				var compiler = createCompiler(source);
-				return compiler.compile().then(node -> Metadata.parse(node));
-			})
+			.then(source -> Task.ok(source).and(getConfig(source.file)))
+			.then(pair -> createCompiler(pair.b, pair.a).compile().then(node -> Metadata.parse(node)))
 			.then(info -> {
 				function writeInfo(label:String, info:Null<String>) {
 					if (info == null) {
@@ -161,7 +167,9 @@ class App implements Command {
 	function getDefaultConfig():PanelsConfig {
 		return {
 			compiler: {
-				startPage: 1
+				startPage: 1,
+				includeSections: includeSections,
+				includePanelCount: includePanelCount
 			},
 			validator: {
 				requireAuthor: requireAuthor,
@@ -171,22 +179,22 @@ class App implements Command {
 		};
 	}
 
-	function createCompiler(source:Source) {
-		var config:PanelsConfig = if (ignoreDotPanels) {
-			console.writeLine('').writeLine('    Ignoring .panels config -- using defaults and CLI flags'.color(Yellow));
-			getDefaultConfig();
-		} else switch DotPanels.find(source.file) {
-			case Some(config):
-				console.writeLine('').writeLine('    Using .panels config'.color(Yellow));
-				// @todo: We need a way to detect if flags were set by the user
-				config;
-			case None:
-				console.writeLine('').writeLine('    No .panels config found -- using defaults and CLI flags'.color(Red));
-				getDefaultConfig();
-		}
-
-		// @todo: We need to be able to override the .panels config
+	function createCompiler(config:PanelsConfig, source:Source):Compiler {
 		return new Compiler(source, new VisualReporter(str -> console.writeLine(str)), config);
+	}
+
+	function getConfig(path:String):Future<PanelsConfig> {
+		return if (ignoreDotPanels) {
+			console.writeLine('').writeLine('    Ignoring .panels config -- using defaults and CLI flags'.color(Yellow));
+			Future.of(getDefaultConfig());
+		} else {
+			DotPanels.find(path)
+				.inspect(_ -> console.writeLine('').writeLine('    Using .panels config'.color(Yellow)))
+				.recover(_ -> {
+					console.writeLine('').writeLine('    No .panels config found -- using defaults and CLI flags'.color(Red));
+					Future.of(getDefaultConfig());
+				});
+		}
 	}
 
 	function getSource(file:String):Task<Source, IoError> {
