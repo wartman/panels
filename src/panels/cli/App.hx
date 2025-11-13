@@ -36,7 +36,7 @@ class App implements Command {
 		If true, Panels will output panel counts in the compiled
 		document next to the page number (e.g. "Page 3 - 4 Panels").
 	**/
-	@:flag('s')
+	@:flag('p')
 	public var includePanelCount:Bool = false;
 
 	/**

@@ -1,7 +1,8 @@
 {
   "compiler": {
     "includeSections": true,
-    "includeFrontmatter": true
+    "includeFrontmatter": true,
+    "includePanelCount": true
   },
   "validator": {
     "requireTitle": true,

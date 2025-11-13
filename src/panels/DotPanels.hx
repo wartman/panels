@@ -56,7 +56,8 @@ class DotPanels {
 			compiler: {
 				startPage: getOr(compiler, 'startPage', 1),
 				includeSections: getOr(compiler, 'includeSections', false),
-				includeFrontmatter: getOr(compiler, 'includeFrontmatter', true)
+				includeFrontmatter: getOr(compiler, 'includeFrontmatter', true),
+				includePanelCount: getOr(compiler, 'includePanelCount', false)
 			},
 			validator: {
 				requireTitle: getOr(validator, 'requireTitle', false),

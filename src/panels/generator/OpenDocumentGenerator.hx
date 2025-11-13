@@ -300,7 +300,7 @@ class OpenDocumentGenerator implements Generator {
 		context.currentPage++;
 		context.currentPanel = 0;
 
-		var children = nodes.map(n -> generateNode(n, context));
+		var children = nodes.map(n -> generateNode(n, context)); // <- This must go here to ensure context.currentPanel is right
 		var titleText = switch isTwoPager {
 			case true:
 				var title = 'Pages ${context.currentPage} to ${context.currentPage + 1} (Spread)';
@@ -310,7 +310,7 @@ class OpenDocumentGenerator implements Generator {
 				'Page ${context.currentPage}';
 		}
 
-		if (config.includePanelCount) {
+		if (config.includePanelCount == true) {
 			titleText += ' - ${context.currentPanel} Panels';
 		}
 
