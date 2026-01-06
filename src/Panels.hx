@@ -1,7 +1,7 @@
-import Director;
-import kit.io.FileSystem;
+import Doc;
+import tink.Cli;
 import panels.cli.*;
 
 function main() {
-	Director.fromSys().execute(new App(FileSystem.ofCwd()));
+	Cli.process(Sys.args(), new App(FileSystem.ofCwd())).handle(Cli.exit);
 }

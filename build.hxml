@@ -1,8 +1,13 @@
 -cp src
 
--lib kit
--lib director
+-lib doc
+-lib scaffold
+-lib sweetie
+-lib tink_core
+-lib tink_extensions
+-lib tink_cli
 -lib hxnodejs
+
 
 -main Panels
 

@@ -1,0 +1,3 @@
+# @install: lix --silent download "gh://github.com/wartman/scaffold#c6f9575993f45858acdca3d19c24841a76d6015e" into scaffold/0.0.1/github/c6f9575993f45858acdca3d19c24841a76d6015e
+-cp ${HAXE_LIBCACHE}/scaffold/0.0.1/github/c6f9575993f45858acdca3d19c24841a76d6015e/src
+-D scaffold=0.0.1

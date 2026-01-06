@@ -1,42 +1,40 @@
 package panels;
 
 import haxe.Json;
-import kit.io.Directory;
-import kit.io.File;
-import kit.io.FileSystem;
-import kit.io.IoError;
-import kit.io.Stat;
+import doc.Directory;
+import doc.File;
+import doc.Stat;
 import panels.PanelsConfig;
 
 using Reflect;
 using haxe.io.Path;
 
 class DotPanels {
-	public static function find(dir:Directory):Task<PanelsConfig, IoError> {
+	public static function find(dir:Directory):Promise<PanelsConfig> {
 		return locateDotPanelsFile(dir)
-			.then(pair -> switch pair {
+			.next(pair -> switch pair {
 				case {a: stat, b: file}:
-					file.read().then(content -> ({
+					file.read().next(content -> ({
 						file: stat.path,
 						content: content
 					} : Source));
 			})
-			.then(source -> new DotPanels(source).parse());
+			.next(source -> new DotPanels(source).parse());
 	}
 
-	static function locateDotPanelsFile(dir:Directory):Task<Pair<Stat, File>, IoError> {
-		return dir.detect('.panels').then(entry -> switch entry {
-			case Empty(_):
-				dir.detect('../').then(entry -> switch entry {
+	static function locateDotPanelsFile(dir:Directory):Promise<Pair<Stat, File>> {
+		return dir.entry('.panels').next(entry -> switch entry {
+			case Missing(_):
+				dir.entry('../').next(entry -> switch entry {
 					case Directory(_, directory):
 						locateDotPanelsFile(directory);
 					default:
-						Task.error(FileNotFound('.panels'));
+						new Error(NotFound, '.panels not found');
 				});
 			case File(stat, file):
-				return Task.ok(Pair.of(stat, file));
+				new Pair(stat, file);
 			default:
-				Task.error(FileNotFound('.panels'));
+				new Error(NotFound, '.panels not found');
 		});
 	}
 

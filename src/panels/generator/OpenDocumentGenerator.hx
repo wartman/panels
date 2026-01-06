@@ -1,8 +1,7 @@
 package panels.generator;
 
 import Xml;
-import kit.io.FileSystem;
-import kit.io.IoError;
+import doc.FileSystem;
 import panels.NodeDef;
 import panels.PanelsConfig;
 
@@ -24,18 +23,17 @@ class OpenDocumentGenerator implements Generator {
 		this.config = config;
 	}
 
-	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError> {
+	public function save(fs:FileSystem, path:String, node:Node):Promise<Noise> {
 		return generate(node)
-			.mapError(e -> Other(e))
-			.then(contents -> fs
-				.detect(path.directory())
-				.then(entry -> entry.ensureDirectory())
-				.then(dir -> dir.file(path.withoutDirectory().withExtension('fodt')).write(contents))
+			.next(contents -> fs
+				.entry(path.directory())
+				.next(entry -> entry.ensureDirectory())
+				.next(dir -> dir.file(path.withoutDirectory().withExtension('fodt')).write(contents))
 			)
-			.then(_ -> Task.nothing());
+			.next(_ -> Noise);
 	}
 
-	public function generate(node:Node):Task<String> {
+	public function generate(node:Node):Promise<String> {
 		var doc = Xml.createDocument();
 		doc.addChild(Xml.parse('<?xml version="1.0" encoding="UTF-8"?>'));
 		doc.addChild(generateNode(node, {

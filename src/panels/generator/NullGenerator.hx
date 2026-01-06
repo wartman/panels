@@ -1,15 +1,13 @@
 package panels.generator;
 
-import kit.io.*;
-
 class NullGenerator implements Generator {
 	public function new() {}
 
-	public function generate(node:Node):Task<String> {
+	public function generate(node:Node):Promise<String> {
 		return '';
 	}
 
-	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError> {
-		return Task.nothing();
+	public function save(fs:FileSystem, path:String, node:Node):Promise<Noise> {
+		return Noise;
 	}
 }

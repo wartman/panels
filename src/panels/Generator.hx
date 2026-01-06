@@ -1,9 +1,8 @@
 package panels;
 
-import kit.io.FileSystem;
-import kit.io.IoError;
+import doc.FileSystem;
 
 interface Generator {
-	public function generate(node:Node):Task<String>;
-	public function save(fs:FileSystem, path:String, node:Node):Task<Nothing, IoError>;
+	public function generate(node:Node):Promise<String>;
+	public function save(fs:FileSystem, path:String, node:Node):Promise<Noise>;
 }

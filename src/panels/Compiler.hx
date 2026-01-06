@@ -15,7 +15,7 @@ class Compiler {
 		this.config = config;
 	}
 
-	public function compile():Task<Node> {
+	public function compile():Promise<Node> {
 		try {
 			var parser = new Parser(source);
 			var node = parser.parse();
@@ -25,13 +25,13 @@ class Compiler {
 			if (errors.length > 0) {
 				for (e in errors) reporter.report(e, source);
 				// @todo: Allow compilation to continue if we only have Warnings?
-				return Task.error(Failure.ofString('Failed to compile'));
+				return new Error(InternalError, 'Failed to compile');
 			}
 
 			return node;
 		} catch (e:ParserException) {
 			reporter.report(e.toReporterMessage(), source);
-			return Task.error(Failure.ofString('Failed to compile'));
+			return new Error(InternalError, 'Failed to compile');
 		}
 	}
 }

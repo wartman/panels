@@ -1,0 +1,3 @@
+# @install: lix --silent download "gh://github.com/wartman/sweetie#e08576e2ac6414c3e6fde26e6a7376318dc484cd" into sweetie/0.0.1/github/e08576e2ac6414c3e6fde26e6a7376318dc484cd
+-cp ${HAXE_LIBCACHE}/sweetie/0.0.1/github/e08576e2ac6414c3e6fde26e6a7376318dc484cd/src
+-D sweetie=0.0.1
