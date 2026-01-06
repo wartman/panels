@@ -1,3 +1,5 @@
-# @install: lix --silent download "gh://github.com/wartman/doc#648147331e81ebf180a623863f7362313e78bd79" into doc/0.0.1/github/648147331e81ebf180a623863f7362313e78bd79
--cp ${HAXE_LIBCACHE}/doc/0.0.1/github/648147331e81ebf180a623863f7362313e78bd79/src
+# @install: lix --silent download "gh://github.com/wartman/doc#8467fe46357ae3c4c1a658587ab915372c45b940" into doc/0.0.1/github/8467fe46357ae3c4c1a658587ab915372c45b940
+-lib tink_core
+-lib tink_extensions
+-cp ${HAXE_LIBCACHE}/doc/0.0.1/github/8467fe46357ae3c4c1a658587ab915372c45b940/src
 -D doc=0.0.1

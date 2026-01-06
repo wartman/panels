@@ -1,12 +1,9 @@
 package panels.cli;
 
-import tink.Cli;
 import doc.FileSystem;
-import director.*;
-// import kit.io.FileSystem;
 import panels.generator.*;
+import tink.Cli;
 
-// using director.StyleTools;
 using haxe.io.Path;
 
 /**
