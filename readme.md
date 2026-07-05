@@ -1,3 +1,7 @@
+> **IMPORTANT**: Panels is no longer being developed in this repositiory!
+>
+> Development has moved to a new repo on [codeberg](https://codeberg.org/wartman/panels).
+
 Panels
 ======
 
